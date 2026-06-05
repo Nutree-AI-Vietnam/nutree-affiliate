@@ -18,16 +18,21 @@ export function Dashboard() {
   useEffect(() => {
     Promise.all([api.getMyStats(), api.getMyReferral(), api.getMyPayouts()])
       .then(([s, r, p]) => { setStats(s); setReferral(r); setPayouts(p); })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Không thể tải dữ liệu"));
   }, [api]);
 
   return (
     <div>
-      <NavBar title="Nutree Affiliates" links={ptLinks} />
+      <NavBar title="Affiliate" links={ptLinks} />
       <main className="mx-auto max-w-5xl p-6">
-        {error && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
-        {!stats ? <p className="text-gray-500">Loading…</p> : (
+        {error && (
+          <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+        )}
+        {!stats ? (
+          <p className="text-gray-400 text-sm">Đang tải…</p>
+        ) : (
           <>
+            {/* Stats grid */}
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
               <StatCard label="Tổng doanh thu" value={currency(stats.totalRevenue)} />
               <StatCard label="Tổng thanh toán" value={currency(stats.totalPayout)} />
@@ -35,18 +40,29 @@ export function Dashboard() {
               <StatCard label="Đang đăng ký" value={String(stats.activeSubscriptions)} />
               <StatCard label="Lần trả gần nhất" value={dateOrDash(stats.lastPaymentDate)} />
             </div>
+
+            {/* Referral card */}
             {referral && (
-              <div className="mb-6 flex items-center gap-5 rounded-xl border border-green-100 bg-green-50 p-5">
-                <QrCode value={referral.link} size={90} />
+              <div
+                className="mb-6 flex items-center gap-5 rounded-2xl p-5 text-white shadow-md"
+                style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
+              >
+                <div className="rounded-xl bg-white/10 p-2 backdrop-blur-sm ring-1 ring-white/20">
+                  <QrCode value={referral.link} size={80} />
+                </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-green-600">Mã giới thiệu của bạn</div>
-                  <div className="text-lg font-extrabold text-gray-900">{referral.code}</div>
-                  <div className="mt-1 font-mono text-sm">{referral.link}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-widest text-white/60">Mã giới thiệu của bạn</div>
+                  <div className="mt-0.5 text-2xl font-extrabold tracking-wide">{referral.code}</div>
+                  <div className="mt-1 font-mono text-xs text-white/70">{referral.link}</div>
                 </div>
               </div>
             )}
-            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-green-600">Lịch sử thanh toán</div>
+
+            {/* Payout history */}
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <div className="mb-4 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#29B6A1" }}>
+                Lịch sử thanh toán
+              </div>
               <DataTable
                 rows={payouts}
                 rowKey={(p) => p.period}
@@ -55,7 +71,11 @@ export function Dashboard() {
                   { key: "period", header: "Kỳ" },
                   { key: "conversions", header: "Chuyển đổi" },
                   { key: "amount", header: "Số tiền", render: (p) => currency(p.amount) },
-                  { key: "status", header: "Trạng thái", render: (p) => (p.status === "paid" ? "Đã trả" : "Chờ xử lý") },
+                  {
+                    key: "status", header: "Trạng thái", render: (p) => p.status === "paid"
+                      ? <span className="rounded-full bg-[#E6F7F5] px-2.5 py-0.5 text-xs font-semibold text-[#1A4739]">Đã trả</span>
+                      : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Chờ xử lý</span>
+                  },
                   { key: "paidDate", header: "Ngày trả", render: (p) => dateOrDash(p.paidDate) },
                 ]}
               />

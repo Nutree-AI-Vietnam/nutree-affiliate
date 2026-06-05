@@ -15,20 +15,32 @@ export function DataTable<T>({
   empty?: string;
 }) {
   if (rows.length === 0) {
-    return <div className="p-6 text-center text-sm text-gray-500">{empty}</div>;
+    return (
+      <div className="py-10 text-center text-sm text-gray-400">
+        <div className="mb-1 text-2xl">🌱</div>
+        {empty}
+      </div>
+    );
   }
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
-        <tr className="bg-green-50 text-left text-green-700">
-          {columns.map((c) => <th key={c.key} className="px-3 py-2.5 pr-4 font-semibold text-xs uppercase tracking-wide">{c.header}</th>)}
+        <tr style={{ background: "linear-gradient(90deg, #1A4739 0%, #29B6A1 100%)" }}>
+          {columns.map((c) => (
+            <th key={c.key} className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-white/90 first:rounded-tl-lg last:rounded-tr-lg">
+              {c.header}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
         {rows.map((row, i) => (
-          <tr key={rowKey(row)} className={`border-t border-gray-100 transition-colors hover:bg-green-50/40 ${i % 2 === 0 ? "" : "bg-gray-50/50"}`}>
+          <tr
+            key={rowKey(row)}
+            className={`border-b border-gray-100 transition-colors hover:bg-[#E6F7F5]/60 ${i % 2 === 1 ? "bg-gray-50/60" : "bg-white"}`}
+          >
             {columns.map((c) => (
-              <td key={c.key} className="px-3 py-2.5 pr-4">
+              <td key={c.key} className="px-3 py-2.5 text-gray-700">
                 {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key])}
               </td>
             ))}
