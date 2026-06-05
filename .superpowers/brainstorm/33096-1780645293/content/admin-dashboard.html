@@ -1,0 +1,55 @@
+<h2>Admin Dashboard — proposed layout</h2>
+<p class="subtitle">What the admin sees: total revenue headline first, then the affiliate tracking table. Does this work?</p>
+
+<div class="mockup">
+  <div class="mockup-header">Preview: Admin Dashboard</div>
+  <div class="mockup-body" style="background:#f7f8fa;padding:18px;">
+
+    <div class="mock-nav" style="display:flex;justify-content:space-between;align-items:center;">
+      <strong>Nutree Affiliates — Admin</strong>
+      <span>Overview &nbsp;·&nbsp; Affiliates &nbsp;·&nbsp; Settings &nbsp;·&nbsp; Logout</span>
+    </div>
+
+    <!-- Headline revenue -->
+    <div style="background:#111;color:#fff;border-radius:12px;padding:20px;margin:16px 0;">
+      <div class="label" style="color:#bbb;">Total Revenue (all affiliates)</div>
+      <div style="font-size:34px;font-weight:800;">$48,250</div>
+      <div style="font-size:13px;color:#bbb;margin-top:4px;">Total payout owed: $3,120 &nbsp;·&nbsp; 47 active affiliates</div>
+    </div>
+
+    <!-- Secondary stat cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+      <div style="background:#fff;border:1px solid #e3e6ea;border-radius:10px;padding:12px;"><div class="label">Pending Trials</div><div style="font-size:22px;font-weight:700;">138</div></div>
+      <div style="background:#fff;border:1px solid #e3e6ea;border-radius:10px;padding:12px;"><div class="label">Active Subscriptions</div><div style="font-size:22px;font-weight:700;">812</div></div>
+      <div style="background:#fff;border:1px solid #e3e6ea;border-radius:10px;padding:12px;"><div class="label">Commission / conversion</div><div style="font-size:22px;font-weight:700;">$10</div></div>
+    </div>
+
+    <!-- Affiliate table -->
+    <div style="background:#fff;border:1px solid #e3e6ea;border-radius:10px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div class="label">Affiliates</div>
+        <input class="mock-input" placeholder="Search affiliate…" style="width:200px;padding:4px 8px;">
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <tr style="text-align:left;color:#888;">
+          <th>Name</th><th>Code</th><th>Pending</th><th>Active</th><th>Revenue</th><th>Payout owed</th><th>Bank info</th><th>Last paid</th><th></th>
+        </tr>
+        <tr><td>Alex R.</td><td>ALEX-NUTREE</td><td>12</td><td>64</td><td>$4,820</td><td>$640</td><td>✅</td><td>May 28</td><td><button class="mock-button" style="padding:2px 8px;">Mark paid</button></td></tr>
+        <tr><td>Sam T.</td><td>SAM-FIT</td><td>5</td><td>31</td><td>$2,310</td><td>$310</td><td>⚠️ Missing</td><td>—</td><td><button class="mock-button" style="padding:2px 8px;">Mark paid</button></td></tr>
+        <tr><td>Jo K.</td><td>JOK-PT</td><td>9</td><td>52</td><td>$3,900</td><td>$520</td><td>✅</td><td>May 28</td><td><button class="mock-button" style="padding:2px 8px;">Mark paid</button></td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Looks good</h3><p>This works — write up the spec.</p></div>
+  </div>
+  <div class="option" data-choice="changes" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Wants changes</h3><p>I'll describe adjustments in the terminal.</p></div>
+  </div>
+</div>
