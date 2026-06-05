@@ -9,8 +9,8 @@ export function BankInfoForm({
   const [accountNumber, setAccountNumber] = useState(initial?.accountNumber ?? "");
   const [routingOrSwift, setRoutingOrSwift] = useState(initial?.routingOrSwift ?? "");
 
-  const field = "mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition";
-  const label = "block text-sm font-semibold text-[#1A4739]";
+  const field = "mt-1 h-11 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#2D2D2D] px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition";
+  const label = "block text-sm font-semibold text-[#1A4739] dark:text-white";
   return (
     <form
       className="max-w-md space-y-5"
@@ -28,7 +28,7 @@ export function BankInfoForm({
       <label className={label}>Số tài khoản / IBAN
         <input className={field} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
       </label>
-      <label className={label}>Routing / SWIFT <span className="font-normal text-gray-400">(tùy chọn)</span>
+      <label className={label}>Routing / SWIFT <span className="font-normal text-gray-400 dark:text-gray-500">(tùy chọn)</span>
         <input className={field} value={routingOrSwift} onChange={(e) => setRoutingOrSwift(e.target.value)} />
       </label>
       <button

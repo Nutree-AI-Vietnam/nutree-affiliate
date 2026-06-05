@@ -37,10 +37,14 @@ export function DataTable<T>({
         {rows.map((row, i) => (
           <tr
             key={rowKey(row)}
-            className={`border-b border-gray-100 transition-colors hover:bg-[#E6F7F5]/60 ${i % 2 === 1 ? "bg-gray-50/60" : "bg-white"}`}
+            className={`border-b border-gray-100 dark:border-white/5 transition-colors hover:bg-[#E6F7F5]/60 dark:hover:bg-[#29B6A1]/10 ${
+              i % 2 === 1
+                ? "bg-gray-50/60 dark:bg-[#262626]"
+                : "bg-white dark:bg-[#2D2D2D]"
+            }`}
           >
             {columns.map((c) => (
-              <td key={c.key} className="px-3 py-2.5 text-gray-700">
+              <td key={c.key} className="px-3 py-2.5 text-gray-700 dark:text-[#B0B0B0]">
                 {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key])}
               </td>
             ))}
