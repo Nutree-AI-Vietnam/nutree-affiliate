@@ -33,13 +33,12 @@ export function Overview() {
       <NavBar title="Admin" links={adminLinks} />
       <main className="mx-auto max-w-6xl p-6">
         {error && (
-          <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+          <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
         {!data ? (
           <p className="text-sm text-gray-400">Đang tải…</p>
         ) : (
           <>
-            {/* Hero revenue banner */}
             <div
               className="mb-6 rounded-2xl p-6 text-white shadow-md"
               style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
@@ -55,21 +54,19 @@ export function Overview() {
               </div>
             </div>
 
-            {/* Stat cards */}
             <div className="mb-6 grid grid-cols-3 gap-3">
               <StatCard label="Đang dùng thử" value={String(data.pendingTrials)} />
               <StatCard label="Đang đăng ký" value={String(data.activeSubscriptions)} />
               <StatCard label="Hoa hồng / chuyển đổi" value={currency(data.commissionPerConversion)} />
             </div>
 
-            {/* Affiliate table */}
-            <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+            <div className="rounded-2xl bg-white dark:bg-[#2D2D2D] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/10 px-5 py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#29B6A1" }}>
                   Danh sách Affiliates
                 </div>
                 <input
-                  className="h-9 w-56 rounded-xl border border-gray-200 bg-[#F5F5F5] px-3 text-sm text-gray-700 placeholder-gray-400 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition"
+                  className="h-9 w-56 rounded-xl border border-gray-200 dark:border-white/10 bg-[#F5F5F5] dark:bg-[#1F1F1F] px-3 text-sm text-gray-700 dark:text-[#B0B0B0] placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition"
                   placeholder="Tìm affiliate…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -90,8 +87,8 @@ export function Overview() {
                     {
                       key: "hasBankInfo", header: "Thông tin NH",
                       render: (r) => r.hasBankInfo
-                        ? <span className="rounded-full bg-[#E6F7F5] px-2.5 py-0.5 text-xs font-semibold text-[#1A4739]">OK</span>
-                        : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Thiếu</span>
+                        ? <span className="rounded-full bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-2.5 py-0.5 text-xs font-semibold text-[#1A4739] dark:text-[#29B6A1]">OK</span>
+                        : <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">Thiếu</span>
                     },
                     { key: "lastPaidDate", header: "Lần trả cuối", render: (r) => dateOrDash(r.lastPaidDate) },
                     {
