@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { ApiContext } from "../../../api";
 import { createMockApi } from "../../../api/mockApi";
 import { saveSession } from "../../../auth/session";
+import { ThemeProvider } from "../../../lib/ThemeContext";
 import { Overview } from "../Overview";
 
 describe("Admin Overview", () => {
@@ -15,7 +16,9 @@ describe("Admin Overview", () => {
     saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin" });
     render(
       <ApiContext.Provider value={api}>
-        <MemoryRouter><Overview /></MemoryRouter>
+        <ThemeProvider>
+          <MemoryRouter><Overview /></MemoryRouter>
+        </ThemeProvider>
       </ApiContext.Provider>
     );
     await waitFor(() => expect(screen.getByText("$11,030")).toBeInTheDocument()); // 4820+2310+3900
@@ -28,7 +31,9 @@ describe("Admin Overview", () => {
     saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin" });
     render(
       <ApiContext.Provider value={api}>
-        <MemoryRouter><Overview /></MemoryRouter>
+        <ThemeProvider>
+          <MemoryRouter><Overview /></MemoryRouter>
+        </ThemeProvider>
       </ApiContext.Provider>
     );
     await waitFor(() => expect(screen.getByText("Alex R.")).toBeInTheDocument());

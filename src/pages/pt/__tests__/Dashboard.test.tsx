@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { ApiContext } from "../../../api";
 import { createMockApi } from "../../../api/mockApi";
 import { saveSession } from "../../../auth/session";
+import { ThemeProvider } from "../../../lib/ThemeContext";
 import { Dashboard } from "../Dashboard";
 
 describe("PT Dashboard", () => {
@@ -15,7 +16,9 @@ describe("PT Dashboard", () => {
     saveSession({ affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt" });
     render(
       <ApiContext.Provider value={api}>
-        <MemoryRouter><Dashboard /></MemoryRouter>
+        <ThemeProvider>
+          <MemoryRouter><Dashboard /></MemoryRouter>
+        </ThemeProvider>
       </ApiContext.Provider>
     );
     await waitFor(() => expect(screen.getByText("$4,820")).toBeInTheDocument());
