@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApi } from "../../api";
 import { NavBar } from "../../components/NavBar";
 import { StatCard } from "../../components/StatCard";
@@ -14,11 +14,12 @@ export function Overview() {
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
 
-  const load = () =>
+  const load = useCallback(() =>
     api.getAdminOverview().then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load")),
+  [api]);
 
-  useEffect(() => { load(); }, [api]);
+  useEffect(() => { load(); }, [load]);
 
   const rows = useMemo(() => {
     if (!data) return [];

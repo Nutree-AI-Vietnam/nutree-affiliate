@@ -3,12 +3,7 @@ import { useApi } from "../../api";
 import { NavBar } from "../../components/NavBar";
 import { QrCode } from "../../components/QrCode";
 import type { ReferralInfo } from "../../types";
-
-const ptLinks = [
-  { to: "/pt", label: "Dashboard" },
-  { to: "/pt/referral", label: "My Code" },
-  { to: "/pt/bank", label: "Bank Info" },
-];
+import { ptLinks } from "./nav";
 
 export function Referral() {
   const api = useApi();

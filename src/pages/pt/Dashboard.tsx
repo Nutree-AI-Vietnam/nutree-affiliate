@@ -6,12 +6,7 @@ import { DataTable } from "../../components/DataTable";
 import { QrCode } from "../../components/QrCode";
 import { currency, dateOrDash } from "../../lib/format";
 import type { MyStats, ReferralInfo, Payout } from "../../types";
-
-const ptLinks = [
-  { to: "/pt", label: "Dashboard" },
-  { to: "/pt/referral", label: "My Code" },
-  { to: "/pt/bank", label: "Bank Info" },
-];
+import { ptLinks } from "./nav";
 
 export function Dashboard() {
   const api = useApi();
