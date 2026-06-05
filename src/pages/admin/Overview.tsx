@@ -32,26 +32,26 @@ export function Overview() {
     <div>
       <NavBar title="Nutree Affiliates — Admin" links={adminLinks} />
       <main className="mx-auto max-w-6xl p-6">
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
         {!data ? <p className="text-gray-500">Đang tải…</p> : (
           <>
-            <div className="mb-4 rounded-xl bg-black p-5 text-white">
-              <div className="text-xs uppercase text-gray-300">Tổng doanh thu (tất cả affiliate)</div>
-              <div className="text-3xl font-extrabold">{currency(data.totalRevenue)}</div>
-              <div className="mt-1 text-sm text-gray-300">
-                Tổng cần thanh toán: {currency(data.totalPayoutOwed)} · {data.activeAffiliates} affiliate đang hoạt động
+            <div className="mb-5 rounded-2xl bg-gradient-to-r from-green-700 to-green-600 p-6 text-white shadow-lg">
+              <div className="text-xs font-semibold uppercase tracking-widest text-green-200">Tổng doanh thu (tất cả affiliate)</div>
+              <div className="mt-1 text-4xl font-extrabold">{currency(data.totalRevenue)}</div>
+              <div className="mt-2 text-sm text-green-200">
+                Tổng cần thanh toán: <span className="font-semibold text-white">{currency(data.totalPayoutOwed)}</span> · {data.activeAffiliates} affiliate đang hoạt động
               </div>
             </div>
-            <div className="mb-4 grid grid-cols-3 gap-3">
+            <div className="mb-5 grid grid-cols-3 gap-3">
               <StatCard label="Đang dùng thử" value={String(data.pendingTrials)} />
               <StatCard label="Đang đăng ký" value={String(data.activeSubscriptions)} />
               <StatCard label="Hoa hồng / chuyển đổi" value={currency(data.commissionPerConversion)} />
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs uppercase text-gray-500">Affiliates</div>
+            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs font-semibold uppercase tracking-widest text-green-600">Affiliates</div>
                 <input
-                  className="w-56 rounded border border-gray-300 px-2 py-1 text-sm"
+                  className="w-56 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 transition"
                   placeholder="Tìm affiliate…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -74,7 +74,7 @@ export function Overview() {
                     key: "action", header: "",
                     render: (r) => (
                       <button
-                        className="rounded bg-black px-2 py-1 text-xs text-white"
+                        className="rounded-lg bg-green-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-700 transition-colors"
                         onClick={async () => { await api.markPayoutPaid(r.affiliateId); await load(); }}>
                         Đánh dấu đã trả
                       </button>

@@ -20,15 +20,15 @@ export function DataTable<T>({
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
-        <tr className="text-left text-gray-500">
-          {columns.map((c) => <th key={c.key} className="py-2 pr-4 font-medium">{c.header}</th>)}
+        <tr className="bg-green-50 text-left text-green-700">
+          {columns.map((c) => <th key={c.key} className="px-3 py-2.5 pr-4 font-semibold text-xs uppercase tracking-wide">{c.header}</th>)}
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => (
-          <tr key={rowKey(row)} className="border-t border-gray-100">
+        {rows.map((row, i) => (
+          <tr key={rowKey(row)} className={`border-t border-gray-100 transition-colors hover:bg-green-50/40 ${i % 2 === 0 ? "" : "bg-gray-50/50"}`}>
             {columns.map((c) => (
-              <td key={c.key} className="py-2 pr-4">
+              <td key={c.key} className="px-3 py-2.5 pr-4">
                 {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key])}
               </td>
             ))}

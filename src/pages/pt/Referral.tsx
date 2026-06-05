@@ -16,7 +16,7 @@ export function Referral() {
     <div>
       <NavBar title="Nutree Affiliates" links={ptLinks} />
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-4 text-xl font-bold">Mã giới thiệu của bạn</h1>
+        <h1 className="mb-6 text-2xl font-extrabold text-gray-900">Mã giới thiệu của bạn</h1>
         {!referral ? <p className="text-gray-500">Đang tải…</p> : (
           <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6">
             <QrCode value={referral.link} size={200} />
@@ -29,7 +29,7 @@ export function Referral() {
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm">{referral.link}</span>
                 <button
-                  className="rounded bg-black px-3 py-1 text-sm text-white"
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
                   onClick={async () => {
                     await navigator.clipboard.writeText(referral.link);
                     setCopied(true);

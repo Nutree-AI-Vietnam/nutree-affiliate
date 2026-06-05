@@ -25,7 +25,7 @@ export function Dashboard() {
     <div>
       <NavBar title="Nutree Affiliates" links={ptLinks} />
       <main className="mx-auto max-w-5xl p-6">
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
         {!stats ? <p className="text-gray-500">Loading…</p> : (
           <>
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -36,17 +36,17 @@ export function Dashboard() {
               <StatCard label="Lần trả gần nhất" value={dateOrDash(stats.lastPaymentDate)} />
             </div>
             {referral && (
-              <div className="mb-6 flex items-center gap-5 rounded-xl border border-gray-200 bg-white p-4">
+              <div className="mb-6 flex items-center gap-5 rounded-xl border border-green-100 bg-green-50 p-5">
                 <QrCode value={referral.link} size={90} />
                 <div>
-                  <div className="text-xs uppercase text-gray-500">Mã giới thiệu của bạn</div>
-                  <div className="text-lg font-bold">{referral.code}</div>
+                  <div className="text-xs font-semibold uppercase tracking-widest text-green-600">Mã giới thiệu của bạn</div>
+                  <div className="text-lg font-extrabold text-gray-900">{referral.code}</div>
                   <div className="mt-1 font-mono text-sm">{referral.link}</div>
                 </div>
               </div>
             )}
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="mb-2 text-xs uppercase text-gray-500">Lịch sử thanh toán</div>
+            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-green-600">Lịch sử thanh toán</div>
               <DataTable
                 rows={payouts}
                 rowKey={(p) => p.period}
