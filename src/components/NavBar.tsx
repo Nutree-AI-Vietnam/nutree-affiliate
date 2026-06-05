@@ -12,7 +12,7 @@ export function NavBar({ links, title }: { links: { to: string; label: string }[
         {links.map((l) => <Link key={l.to} to={l.to} className="hover:underline">{l.label}</Link>)}
         <button
           onClick={async () => { await api.logout(); clearSession(); navigate("/login"); }}
-          className="hover:underline">Logout</button>
+          className="hover:underline">Đăng xuất</button>
       </div>
     </nav>
   );

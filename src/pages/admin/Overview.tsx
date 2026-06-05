@@ -6,7 +6,7 @@ import { DataTable } from "../../components/DataTable";
 import { currency, dateOrDash } from "../../lib/format";
 import type { AdminOverview } from "../../types";
 
-const adminLinks = [{ to: "/admin", label: "Overview" }];
+const adminLinks = [{ to: "/admin", label: "Tổng quan" }];
 
 export function Overview() {
   const api = useApi();
@@ -33,26 +33,26 @@ export function Overview() {
       <NavBar title="Nutree Affiliates — Admin" links={adminLinks} />
       <main className="mx-auto max-w-6xl p-6">
         {error && <p className="text-red-600">{error}</p>}
-        {!data ? <p className="text-gray-500">Loading…</p> : (
+        {!data ? <p className="text-gray-500">Đang tải…</p> : (
           <>
             <div className="mb-4 rounded-xl bg-black p-5 text-white">
-              <div className="text-xs uppercase text-gray-300">Total Revenue (all affiliates)</div>
+              <div className="text-xs uppercase text-gray-300">Tổng doanh thu (tất cả affiliate)</div>
               <div className="text-3xl font-extrabold">{currency(data.totalRevenue)}</div>
               <div className="mt-1 text-sm text-gray-300">
-                Total payout owed: {currency(data.totalPayoutOwed)} · {data.activeAffiliates} active affiliates
+                Tổng cần thanh toán: {currency(data.totalPayoutOwed)} · {data.activeAffiliates} affiliate đang hoạt động
               </div>
             </div>
             <div className="mb-4 grid grid-cols-3 gap-3">
-              <StatCard label="Pending Trials" value={String(data.pendingTrials)} />
-              <StatCard label="Active Subscriptions" value={String(data.activeSubscriptions)} />
-              <StatCard label="Commission / conversion" value={currency(data.commissionPerConversion)} />
+              <StatCard label="Đang dùng thử" value={String(data.pendingTrials)} />
+              <StatCard label="Đang đăng ký" value={String(data.activeSubscriptions)} />
+              <StatCard label="Hoa hồng / chuyển đổi" value={currency(data.commissionPerConversion)} />
             </div>
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-xs uppercase text-gray-500">Affiliates</div>
                 <input
                   className="w-56 rounded border border-gray-300 px-2 py-1 text-sm"
-                  placeholder="Search affiliate…"
+                  placeholder="Tìm affiliate…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -60,23 +60,23 @@ export function Overview() {
               <DataTable
                 rows={rows}
                 rowKey={(r) => r.affiliateId}
-                empty="No affiliates"
+                empty="Không có affiliate"
                 columns={[
-                  { key: "name", header: "Name" },
-                  { key: "code", header: "Code" },
-                  { key: "pendingTrials", header: "Pending" },
-                  { key: "activeSubscriptions", header: "Active" },
-                  { key: "totalRevenue", header: "Revenue", render: (r) => currency(r.totalRevenue) },
-                  { key: "payoutOwed", header: "Payout owed", render: (r) => currency(r.payoutOwed) },
-                  { key: "hasBankInfo", header: "Bank info", render: (r) => (r.hasBankInfo ? "OK" : "Missing") },
-                  { key: "lastPaidDate", header: "Last paid", render: (r) => dateOrDash(r.lastPaidDate) },
+                  { key: "name", header: "Tên" },
+                  { key: "code", header: "Mã" },
+                  { key: "pendingTrials", header: "Dùng thử" },
+                  { key: "activeSubscriptions", header: "Đăng ký" },
+                  { key: "totalRevenue", header: "Doanh thu", render: (r) => currency(r.totalRevenue) },
+                  { key: "payoutOwed", header: "Cần trả", render: (r) => currency(r.payoutOwed) },
+                  { key: "hasBankInfo", header: "Thông tin NH", render: (r) => (r.hasBankInfo ? "OK" : "Thiếu") },
+                  { key: "lastPaidDate", header: "Lần trả cuối", render: (r) => dateOrDash(r.lastPaidDate) },
                   {
                     key: "action", header: "",
                     render: (r) => (
                       <button
                         className="rounded bg-black px-2 py-1 text-xs text-white"
                         onClick={async () => { await api.markPayoutPaid(r.affiliateId); await load(); }}>
-                        Mark paid
+                        Đánh dấu đã trả
                       </button>
                     ),
                   },

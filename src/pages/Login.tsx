@@ -33,15 +33,15 @@ export function Login() {
         <label className="block text-sm">Email
           <input className={field} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
-        <label className="block text-sm">Password
+        <label className="block text-sm">Mật khẩu
           <input className={field} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button disabled={loading} className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50">
-          {loading ? "Logging in…" : "Log in"}
+          {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>
       </form>
-      <p className="mt-4 text-sm">No account? <Link className="underline" to="/register">Register</Link></p>
+      <p className="mt-4 text-sm">Chưa có tài khoản? <Link className="underline" to="/register">Đăng ký</Link></p>
     </div>
   );
 }

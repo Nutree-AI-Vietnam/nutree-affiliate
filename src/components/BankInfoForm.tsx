@@ -18,19 +18,19 @@ export function BankInfoForm({
         onSave({ bankName, accountHolder, accountNumber, routingOrSwift });
       }}
     >
-      <label className="block text-sm">Bank name
+      <label className="block text-sm">Tên ngân hàng
         <input className={field} value={bankName} onChange={(e) => setBankName(e.target.value)} required />
       </label>
-      <label className="block text-sm">Account holder
+      <label className="block text-sm">Chủ tài khoản
         <input className={field} value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} required />
       </label>
-      <label className="block text-sm">Account number / IBAN
+      <label className="block text-sm">Số tài khoản / IBAN
         <input className={field} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
       </label>
-      <label className="block text-sm">Routing / SWIFT (optional)
+      <label className="block text-sm">Routing / SWIFT (tùy chọn)
         <input className={field} value={routingOrSwift} onChange={(e) => setRoutingOrSwift(e.target.value)} />
       </label>
-      <button type="submit" className="rounded bg-black px-4 py-2 text-white">Save</button>
+      <button type="submit" className="rounded bg-black px-4 py-2 text-white">Lưu</button>
     </form>
   );
 }

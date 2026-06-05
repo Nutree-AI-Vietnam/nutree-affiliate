@@ -24,16 +24,16 @@ describe("Login", () => {
   it("logs in a PT and navigates to the PT dashboard", async () => {
     setup();
     await userEvent.type(screen.getByLabelText(/email/i), "alex@pt.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "password");
-    await userEvent.click(screen.getByRole("button", { name: /log in/i }));
+    await userEvent.type(screen.getByLabelText(/mật khẩu/i), "password");
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
     await waitFor(() => expect(screen.getByText("pt dashboard")).toBeInTheDocument());
   });
 
   it("shows an error on bad credentials", async () => {
     setup();
     await userEvent.type(screen.getByLabelText(/email/i), "alex@pt.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "nope");
-    await userEvent.click(screen.getByRole("button", { name: /log in/i }));
+    await userEvent.type(screen.getByLabelText(/mật khẩu/i), "nope");
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
     await waitFor(() => expect(screen.getByText(/invalid/i)).toBeInTheDocument());
   });
 });

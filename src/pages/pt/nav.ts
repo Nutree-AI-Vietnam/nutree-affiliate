@@ -1,5 +1,5 @@
 export const ptLinks = [
-  { to: "/pt", label: "Dashboard" },
-  { to: "/pt/referral", label: "My Code" },
-  { to: "/pt/bank", label: "Bank Info" },
+  { to: "/pt", label: "Tổng quan" },
+  { to: "/pt/referral", label: "Mã của tôi" },
+  { to: "/pt/bank", label: "Thông tin NH" },
 ];

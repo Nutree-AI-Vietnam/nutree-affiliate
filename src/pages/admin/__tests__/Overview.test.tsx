@@ -32,7 +32,7 @@ describe("Admin Overview", () => {
       </ApiContext.Provider>
     );
     await waitFor(() => expect(screen.getByText("Alex R.")).toBeInTheDocument());
-    await userEvent.type(screen.getByPlaceholderText(/search/i), "Sam");
+    await userEvent.type(screen.getByPlaceholderText(/tìm/i), "Sam");
     expect(screen.queryByText("Alex R.")).not.toBeInTheDocument();
     expect(screen.getByText("Sam T.")).toBeInTheDocument();
   });

@@ -19,7 +19,7 @@ describe("PT Dashboard", () => {
       </ApiContext.Provider>
     );
     await waitFor(() => expect(screen.getByText("$4,820")).toBeInTheDocument());
-    expect(screen.getByText("Total Revenue")).toBeInTheDocument();
+    expect(screen.getByText("Tổng doanh thu")).toBeInTheDocument();
     expect(screen.getByText("64")).toBeInTheDocument(); // active subs
   });
 });

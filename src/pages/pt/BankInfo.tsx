@@ -22,11 +22,11 @@ export function BankInfo() {
     <div>
       <NavBar title="Nutree Affiliates" links={ptLinks} />
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-4 text-xl font-bold">Bank information</h1>
-        {!loaded ? <p className="text-gray-500">Loading…</p> : (
+        <h1 className="mb-4 text-xl font-bold">Thông tin ngân hàng</h1>
+        {!loaded ? <p className="text-gray-500">Đang tải…</p> : (
           <>
             {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-            {saved && <p className="mb-3 text-sm text-green-700">Saved.</p>}
+            {saved && <p className="mb-3 text-sm text-green-700">Đã lưu.</p>}
             <BankInfoForm
               initial={info}
               onSave={async (next) => {

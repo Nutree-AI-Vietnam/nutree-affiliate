@@ -29,34 +29,34 @@ export function Dashboard() {
         {!stats ? <p className="text-gray-500">Loading…</p> : (
           <>
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-              <StatCard label="Total Revenue" value={currency(stats.totalRevenue)} />
-              <StatCard label="Total Payout" value={currency(stats.totalPayout)} />
-              <StatCard label="Pending Trials" value={String(stats.pendingTrials)} />
-              <StatCard label="Active Subs" value={String(stats.activeSubscriptions)} />
-              <StatCard label="Last Payment" value={dateOrDash(stats.lastPaymentDate)} />
+              <StatCard label="Tổng doanh thu" value={currency(stats.totalRevenue)} />
+              <StatCard label="Tổng thanh toán" value={currency(stats.totalPayout)} />
+              <StatCard label="Đang dùng thử" value={String(stats.pendingTrials)} />
+              <StatCard label="Đang đăng ký" value={String(stats.activeSubscriptions)} />
+              <StatCard label="Lần trả gần nhất" value={dateOrDash(stats.lastPaymentDate)} />
             </div>
             {referral && (
               <div className="mb-6 flex items-center gap-5 rounded-xl border border-gray-200 bg-white p-4">
                 <QrCode value={referral.link} size={90} />
                 <div>
-                  <div className="text-xs uppercase text-gray-500">Your referral code</div>
+                  <div className="text-xs uppercase text-gray-500">Mã giới thiệu của bạn</div>
                   <div className="text-lg font-bold">{referral.code}</div>
                   <div className="mt-1 font-mono text-sm">{referral.link}</div>
                 </div>
               </div>
             )}
             <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="mb-2 text-xs uppercase text-gray-500">Payout history</div>
+              <div className="mb-2 text-xs uppercase text-gray-500">Lịch sử thanh toán</div>
               <DataTable
                 rows={payouts}
                 rowKey={(p) => p.period}
-                empty="Share your link to start earning"
+                empty="Chia sẻ link của bạn để bắt đầu kiếm tiền"
                 columns={[
-                  { key: "period", header: "Period" },
-                  { key: "conversions", header: "Conversions" },
-                  { key: "amount", header: "Amount", render: (p) => currency(p.amount) },
-                  { key: "status", header: "Status", render: (p) => (p.status === "paid" ? "Paid" : "Pending") },
-                  { key: "paidDate", header: "Paid date", render: (p) => dateOrDash(p.paidDate) },
+                  { key: "period", header: "Kỳ" },
+                  { key: "conversions", header: "Chuyển đổi" },
+                  { key: "amount", header: "Số tiền", render: (p) => currency(p.amount) },
+                  { key: "status", header: "Trạng thái", render: (p) => (p.status === "paid" ? "Đã trả" : "Chờ xử lý") },
+                  { key: "paidDate", header: "Ngày trả", render: (p) => dateOrDash(p.paidDate) },
                 ]}
               />
             </div>
