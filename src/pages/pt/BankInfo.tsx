@@ -22,17 +22,17 @@ export function BankInfo() {
     <div>
       <NavBar title="Affiliate" links={ptLinks} />
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-2 text-2xl font-extrabold" style={{ color: "#1A4739" }}>Thông tin ngân hàng</h1>
-        <p className="mb-6 text-sm text-gray-500">Thông tin này sẽ được dùng để chuyển hoa hồng cho bạn.</p>
+        <h1 className="mb-2 text-2xl font-extrabold text-[#1A4739] dark:text-white">Thông tin ngân hàng</h1>
+        <p className="mb-6 text-sm text-gray-500 dark:text-[#B0B0B0]">Thông tin này sẽ được dùng để chuyển hoa hồng cho bạn.</p>
         {!loaded ? (
           <p className="text-sm text-gray-400">Đang tải…</p>
         ) : (
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+          <div className="rounded-2xl bg-white dark:bg-[#2D2D2D] p-6 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
             {error && (
-              <p className="mb-4 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>
+              <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400">{error}</p>
             )}
             {saved && (
-              <p className="mb-4 rounded-xl bg-[#E6F7F5] px-4 py-2.5 text-sm font-semibold" style={{ color: "#1A4739" }}>
+              <p className="mb-4 rounded-xl bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-4 py-2.5 text-sm font-semibold text-[#1A4739] dark:text-[#29B6A1]">
                 ✓ Đã lưu thông tin ngân hàng
               </p>
             )}

@@ -16,12 +16,11 @@ export function Referral() {
     <div>
       <NavBar title="Affiliate" links={ptLinks} />
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-6 text-2xl font-extrabold" style={{ color: "#1A4739" }}>Mã giới thiệu của bạn</h1>
+        <h1 className="mb-6 text-2xl font-extrabold text-[#1A4739] dark:text-white">Mã giới thiệu của bạn</h1>
         {!referral ? (
           <p className="text-sm text-gray-400">Đang tải…</p>
         ) : (
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-            {/* Gradient header */}
+          <div className="overflow-hidden rounded-2xl bg-white dark:bg-[#2D2D2D] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
             <div
               className="flex flex-col items-center gap-4 p-8"
               style={{ background: "linear-gradient(160deg, #1A4739 0%, #29B6A1 100%)" }}
@@ -35,11 +34,10 @@ export function Referral() {
               </div>
             </div>
 
-            {/* Link section */}
             <div className="p-6">
               <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#29B6A1" }}>Link chia sẻ</div>
-              <div className="mt-2 flex items-center gap-3 rounded-xl bg-[#F5F5F5] px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-gray-700">{referral.link}</span>
+              <div className="mt-2 flex items-center gap-3 rounded-xl bg-[#F5F5F5] dark:bg-[#1F1F1F] px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-gray-700 dark:text-[#B0B0B0]">{referral.link}</span>
                 <button
                   className="shrink-0 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-95"
                   style={{ background: copied ? "#4CAF50" : "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
@@ -52,7 +50,7 @@ export function Referral() {
                   {copied ? "✓ Đã sao chép" : "Sao chép"}
                 </button>
               </div>
-              <p className="mt-3 text-sm text-gray-500">
+              <p className="mt-3 text-sm text-gray-500 dark:text-[#B0B0B0]">
                 Chia sẻ link này với khách hàng để nhận hoa hồng khi họ đăng ký Nutree AI.
               </p>
             </div>

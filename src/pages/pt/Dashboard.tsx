@@ -26,13 +26,12 @@ export function Dashboard() {
       <NavBar title="Affiliate" links={ptLinks} />
       <main className="mx-auto max-w-5xl p-6">
         {error && (
-          <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+          <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
         {!stats ? (
           <p className="text-gray-400 text-sm">Đang tải…</p>
         ) : (
           <>
-            {/* Stats grid */}
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
               <StatCard label="Tổng doanh thu" value={currency(stats.totalRevenue)} />
               <StatCard label="Tổng thanh toán" value={currency(stats.totalPayout)} />
@@ -41,7 +40,6 @@ export function Dashboard() {
               <StatCard label="Lần trả gần nhất" value={dateOrDash(stats.lastPaymentDate)} />
             </div>
 
-            {/* Referral card */}
             {referral && (
               <div
                 className="mb-6 flex items-center gap-5 rounded-2xl p-5 text-white shadow-md"
@@ -58,8 +56,7 @@ export function Dashboard() {
               </div>
             )}
 
-            {/* Payout history */}
-            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <div className="rounded-2xl bg-white dark:bg-[#2D2D2D] p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
               <div className="mb-4 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#29B6A1" }}>
                 Lịch sử thanh toán
               </div>
@@ -73,8 +70,8 @@ export function Dashboard() {
                   { key: "amount", header: "Số tiền", render: (p) => currency(p.amount) },
                   {
                     key: "status", header: "Trạng thái", render: (p) => p.status === "paid"
-                      ? <span className="rounded-full bg-[#E6F7F5] px-2.5 py-0.5 text-xs font-semibold text-[#1A4739]">Đã trả</span>
-                      : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Chờ xử lý</span>
+                      ? <span className="rounded-full bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-2.5 py-0.5 text-xs font-semibold text-[#1A4739] dark:text-[#29B6A1]">Đã trả</span>
+                      : <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">Chờ xử lý</span>
                   },
                   { key: "paidDate", header: "Ngày trả", render: (p) => dateOrDash(p.paidDate) },
                 ]}
