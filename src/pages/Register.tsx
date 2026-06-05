@@ -33,9 +33,7 @@ export function Register() {
         className="hidden w-1/2 flex-col items-center justify-center p-12 text-white lg:flex"
         style={{ background: "linear-gradient(160deg, #1A4739 0%, #29B6A1 100%)" }}
       >
-        <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 ring-2 ring-white/30">
-          <span className="text-2xl font-extrabold text-white">N</span>
-        </div>
+        <img src="/logo-icon.png" alt="Nutree AI" className="mb-8 h-20 w-20 rounded-2xl object-cover shadow-lg" />
         <h1 className="mb-3 text-4xl font-extrabold tracking-tight">Nutree AI</h1>
         <p className="text-lg font-medium text-white/80 italic">Nutrition, naturally intelligent.</p>
         <div className="mt-12 max-w-xs text-center text-sm text-white/60">
@@ -46,12 +44,7 @@ export function Register() {
       <div className="flex flex-1 flex-col items-center justify-center bg-[#F5F5F5] dark:bg-[#1F1F1F] px-6">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center lg:hidden">
-            <div
-              className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
-              style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
-            >
-              <span className="text-xl font-extrabold text-white">N</span>
-            </div>
+            <img src="/logo-icon.png" alt="Nutree AI" className="mx-auto mb-3 h-14 w-14 rounded-2xl object-cover shadow-lg" />
             <h1 className="text-2xl font-extrabold" style={{ color: "#1A4739" }}>Nutree AI</h1>
           </div>
 

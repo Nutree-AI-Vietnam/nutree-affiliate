@@ -7,3 +7,73 @@
     @apply bg-[#F5F5F5] text-gray-900 dark:bg-[#1F1F1F] dark:text-white font-sans antialiased;
   }
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Earnings slider ─── */
+.earnings-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    #29B6A1 0%,
+    #29B6A1 var(--pct, 0%),
+    #e5e7eb var(--pct, 0%),
+    #e5e7eb 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.dark .earnings-slider {
+  background: linear-gradient(
+    to right,
+    #29B6A1 0%,
+    #29B6A1 var(--pct, 0%),
+    rgba(255,255,255,0.1) var(--pct, 0%),
+    rgba(255,255,255,0.1) 100%
+  );
+}
+
+.earnings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.dark .earnings-slider::-webkit-slider-thumb {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.earnings-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.earnings-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
