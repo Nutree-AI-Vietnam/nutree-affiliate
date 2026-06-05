@@ -4,16 +4,19 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { ApiContext } from "./api";
 import { createMockApi } from "./api/mockApi";
+import { ThemeProvider } from "./lib/ThemeContext";
 import "./index.css";
 
 const api = createMockApi();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ApiContext.Provider value={api}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ApiContext.Provider>
+    <ThemeProvider>
+      <ApiContext.Provider value={api}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ApiContext.Provider>
+    </ThemeProvider>
   </React.StrictMode>
 );
