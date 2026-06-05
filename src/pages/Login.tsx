@@ -25,10 +25,10 @@ export function Login() {
     }
   }
 
-  const field = "mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition";
+  const field = "mt-1.5 h-11 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#2D2D2D] px-4 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20 transition";
   return (
     <div className="flex min-h-screen">
-      {/* Left panel — brand gradient */}
+      {/* Left panel — brand gradient (unchanged in dark) */}
       <div
         className="hidden w-1/2 flex-col items-center justify-center p-12 text-white lg:flex"
         style={{ background: "linear-gradient(160deg, #1A4739 0%, #29B6A1 100%)" }}
@@ -43,10 +43,9 @@ export function Login() {
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-[#F5F5F5] px-6">
+      {/* Right panel */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-[#F5F5F5] dark:bg-[#1F1F1F] px-6">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
             <div
               className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
@@ -57,20 +56,20 @@ export function Login() {
             <h1 className="text-2xl font-extrabold" style={{ color: "#1A4739" }}>Nutree AI</h1>
           </div>
 
-          <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5">
-            <h2 className="mb-1 text-xl font-extrabold" style={{ color: "#1A4739" }}>Chào mừng trở lại 👋</h2>
-            <p className="mb-6 text-sm text-gray-500">Đăng nhập để xem dashboard của bạn</p>
+          <div className="rounded-2xl bg-white dark:bg-[#2D2D2D] p-8 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+            <h2 className="mb-1 text-xl font-extrabold text-[#1A4739] dark:text-white">Chào mừng trở lại 👋</h2>
+            <p className="mb-6 text-sm text-gray-500 dark:text-[#B0B0B0]">Đăng nhập để xem dashboard của bạn</p>
             <form className="space-y-4" onSubmit={submit}>
-              <label className="block text-sm font-semibold" style={{ color: "#1A4739" }}>
+              <label className="block text-sm font-semibold text-[#1A4739] dark:text-white">
                 Email
                 <input className={field} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="ban@example.com" />
               </label>
-              <label className="block text-sm font-semibold" style={{ color: "#1A4739" }}>
+              <label className="block text-sm font-semibold text-[#1A4739] dark:text-white">
                 Mật khẩu
                 <input className={field} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
               </label>
               {error && (
-                <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>
+                <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400">{error}</p>
               )}
               <button
                 disabled={loading}
@@ -80,7 +79,7 @@ export function Login() {
                 {loading ? "Đang đăng nhập…" : "Đăng nhập"}
               </button>
             </form>
-            <p className="mt-5 text-center text-sm text-gray-500">
+            <p className="mt-5 text-center text-sm text-gray-500 dark:text-[#B0B0B0]">
               Chưa có tài khoản?{" "}
               <Link className="font-semibold hover:opacity-80 transition-opacity" style={{ color: "#29B6A1" }} to="/register">
                 Đăng ký ngay
