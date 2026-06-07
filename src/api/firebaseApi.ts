@@ -28,25 +28,26 @@ export function createFirebaseApi(): AffiliateApi {
       const uid = user.uid;
       const ref = doc(db, "affiliates", uid);
       const snap = await getDoc(ref);
-
+      let affiliateData: Record<string, unknown>;
       if (!snap.exists()) {
         const referralCode = generateReferralCode(uid);
-        await setDoc(ref, {
+        affiliateData = {
           name: user.displayName ?? "Affiliate",
           email: user.email ?? "",
           role: "pt",
           referralCode,
           referralLink: `https://nutree.app/r/${referralCode}`,
           bankInfo: null,
-        });
+        };
+        await setDoc(ref, affiliateData);
+      } else {
+        affiliateData = snap.data() as Record<string, unknown>;
       }
-
-      const data = snap.exists() ? snap.data() : (await getDoc(ref)).data()!;
       return {
         affiliateId: uid,
-        name: data.name,
-        email: data.email,
-        role: data.role,
+        name: affiliateData.name as string,
+        email: affiliateData.email as string,
+        role: affiliateData.role as "pt" | "admin",
       };
     },
 

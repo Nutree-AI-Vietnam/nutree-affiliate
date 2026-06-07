@@ -70,7 +70,7 @@ describe("Login", () => {
 
   it("does not show an error when popup is closed by user", async () => {
     const api = makeMockApiWithGoogle({
-      login: vi.fn().mockRejectedValue(new Error("popup-closed")),
+      login: vi.fn().mockRejectedValue(Object.assign(new Error("popup-closed"), { code: "auth/popup-closed-by-user" })),
     });
     setup(api);
     await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));

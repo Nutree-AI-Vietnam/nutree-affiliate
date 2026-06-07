@@ -310,7 +310,7 @@ export function Login() {
       navigate(session.role === "admin" ? "/admin" : "/pt");
     } catch (err: unknown) {
       // Popup closed by user — ignore
-      if (err instanceof Error && err.message.includes("popup-closed")) return;
+      if ((err as { code?: string }).code === "auth/popup-closed-by-user") return;
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       setLoading(false);

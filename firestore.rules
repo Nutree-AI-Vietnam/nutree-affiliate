@@ -1,26 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Affiliates can read/write their own doc
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Affiliates: own doc + admin full access
     match /affiliates/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isAdmin();
     }
 
-    // Affiliates can read their own conversions and payouts
+    // Conversions: affiliates read own, admins read all
     match /conversions/{uid}/entries/{entryId} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false; // written by backend only
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
+    // Payouts: affiliates read own, admins read/write all
     match /payouts/{uid}/entries/{entryId} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false; // written by backend only
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Commission settings readable by all authenticated users
+    // Commission settings: all authenticated read, admins write
     match /settings/commission {
       allow read: if request.auth != null;
-      allow write: if false; // admin-only via console
+      allow write: if isAdmin();
+    }
+
+    // Admins collection: only admins can read (to verify own status)
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // managed via Firebase Admin SDK only
     }
   }
 }
