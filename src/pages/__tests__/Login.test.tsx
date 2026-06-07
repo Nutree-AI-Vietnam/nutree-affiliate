@@ -1,14 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ApiContext } from "../../api";
+import type { AffiliateApi } from "../../api";
 import { createMockApi } from "../../api/mockApi";
 import { Login } from "../Login";
 
-function setup() {
+function makeMockApiWithGoogle(overrides: Partial<AffiliateApi> = {}): AffiliateApi {
+  return { ...createMockApi(), ...overrides };
+}
+
+function setup(api: AffiliateApi = makeMockApiWithGoogle()) {
   return render(
-    <ApiContext.Provider value={createMockApi()}>
+    <ApiContext.Provider value={api}>
       <MemoryRouter initialEntries={["/login"]}>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -21,19 +26,57 @@ function setup() {
 }
 
 describe("Login", () => {
-  it("logs in a PT and navigates to the PT dashboard", async () => {
+  it("shows the Google sign-in button after clicking Đăng nhập", async () => {
     setup();
-    await userEvent.type(screen.getByLabelText(/email/i), "alex@pt.com");
-    await userEvent.type(screen.getByLabelText(/mật khẩu/i), "password");
-    await userEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    expect(screen.getByRole("button", { name: /đăng nhập với google/i })).toBeInTheDocument();
+  });
+
+  it("navigates to /pt on successful Google sign-in as PT", async () => {
+    const api = makeMockApiWithGoogle({
+      login: vi.fn().mockResolvedValue({
+        affiliateId: "uid1", name: "Alex", email: "alex@test.com", role: "pt",
+      }),
+    });
+    setup(api);
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
     await waitFor(() => expect(screen.getByText("pt dashboard")).toBeInTheDocument());
   });
 
-  it("shows an error on bad credentials", async () => {
-    setup();
-    await userEvent.type(screen.getByLabelText(/email/i), "alex@pt.com");
-    await userEvent.type(screen.getByLabelText(/mật khẩu/i), "nope");
-    await userEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
-    await waitFor(() => expect(screen.getByText(/invalid/i)).toBeInTheDocument());
+  it("navigates to /admin on successful Google sign-in as admin", async () => {
+    const api = makeMockApiWithGoogle({
+      login: vi.fn().mockResolvedValue({
+        affiliateId: "uid2", name: "Admin", email: "admin@test.com", role: "admin",
+      }),
+    });
+    setup(api);
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
+    await waitFor(() => expect(screen.getByText("admin overview")).toBeInTheDocument());
+  });
+
+  it("shows an error when sign-in fails", async () => {
+    const api = makeMockApiWithGoogle({
+      login: vi.fn().mockRejectedValue(new Error("auth/network-request-failed")),
+    });
+    setup(api);
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/auth\/network-request-failed/i)).toBeInTheDocument()
+    );
+  });
+
+  it("does not show an error when popup is closed by user", async () => {
+    const api = makeMockApiWithGoogle({
+      login: vi.fn().mockRejectedValue(new Error("popup-closed")),
+    });
+    setup(api);
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
+    await waitFor(() =>
+      expect(screen.queryByText(/popup-closed/i)).not.toBeInTheDocument()
+    );
   });
 });
