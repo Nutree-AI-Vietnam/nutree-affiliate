@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { RequireRole } from "./auth/guard";
 import { Login } from "./pages/Login";
-import { Register } from "./pages/Register";
 import { Dashboard } from "./pages/pt/Dashboard";
 import { Referral } from "./pages/pt/Referral";
 import { BankInfo } from "./pages/pt/BankInfo";
@@ -12,7 +11,6 @@ export function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route element={<RequireRole role="pt" />}>
         <Route path="/pt" element={<Dashboard />} />
         <Route path="/pt/referral" element={<Referral />} />
