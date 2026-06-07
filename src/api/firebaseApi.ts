@@ -41,7 +41,7 @@ export function createFirebaseApi(): AffiliateApi {
         });
       }
 
-      const data = (await getDoc(ref)).data()!;
+      const data = snap.exists() ? snap.data() : (await getDoc(ref)).data()!;
       return {
         affiliateId: uid,
         name: data.name,
@@ -136,7 +136,10 @@ export function createFirebaseApi(): AffiliateApi {
       for (const affDoc of affSnap.docs) {
         const uid = affDoc.id;
         const aff = affDoc.data();
-        const convSnap = await getDocs(collection(db, "conversions", uid, "entries"));
+        const [convSnap, paySnap] = await Promise.all([
+          getDocs(collection(db, "conversions", uid, "entries")),
+          getDocs(collection(db, "payouts", uid, "entries")),
+        ]);
 
         let affPending = 0;
         let affActive = 0;
@@ -152,8 +155,6 @@ export function createFirebaseApi(): AffiliateApi {
         activeSubscriptions += affActive;
         totalRevenue += affRevenue;
         totalPayoutOwed += affPayoutOwed;
-
-        const paySnap = await getDocs(collection(db, "payouts", uid, "entries"));
         let lastPaidDate: string | null = null;
         paySnap.forEach((d) => {
           const p = d.data();
