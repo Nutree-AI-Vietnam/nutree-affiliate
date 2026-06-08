@@ -20,13 +20,26 @@ async function createAffiliate(
   if (userRows.length > 0) {
     affiliateId = (userRows[0] as { id: string }).id;
   } else {
-    // New affiliate — create a stub users row so FK constraints are satisfied
-    affiliateId = randomUUID();
-    const username = `aff_${email.split("@")[0]}_${randomBytes(3).toString("hex")}`;
-    await sql`
-      INSERT INTO users (id, firebase_uid, email, username, password_hash, provider, is_active, onboarding_completed, last_accessed, created_at, updated_at)
-      VALUES (${affiliateId}, ${uid}, ${email}, ${username}, 'AFFILIATE_GOOGLE_AUTH', 'google', true, false, NOW(), NOW(), NOW())
-    `;
+    // Check if a users row exists for this email (Nutree app user logging into affiliate portal)
+    const emailRows = await sql`SELECT id FROM users WHERE email = ${email}`;
+    if (emailRows.length > 0) {
+      affiliateId = (emailRows[0] as { id: string }).id;
+      // Link their firebase_uid so future lookups by uid work
+      await sql`UPDATE users SET firebase_uid = ${uid} WHERE id = ${affiliateId}`;
+    } else {
+      // Brand new user — create a stub users row so FK constraints are satisfied
+      affiliateId = randomUUID();
+      const username = `aff_${email.split("@")[0]}_${randomBytes(3).toString("hex")}`;
+      await sql`
+        INSERT INTO users (id, firebase_uid, email, username, password_hash, provider, is_active, onboarding_completed, last_accessed, created_at, updated_at)
+        VALUES (${affiliateId}, ${uid}, ${email}, ${username}, 'AFFILIATE_GOOGLE_AUTH', 'GOOGLE', true, false, NOW(), NOW(), NOW())
+        ON CONFLICT (email) DO UPDATE SET firebase_uid = ${uid}
+        RETURNING id
+      `;
+      // Re-fetch in case ON CONFLICT fired (another row with same email existed)
+      const refetch = await sql`SELECT id FROM users WHERE email = ${email}`;
+      affiliateId = (refetch[0] as { id: string }).id;
+    }
   }
 
   const code = generateReferralCode();
