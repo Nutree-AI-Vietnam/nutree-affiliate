@@ -172,8 +172,11 @@ export function createNeonApi(): AffiliateApi {
       };
     },
 
-    async markPayoutPaid(affiliateId: string): Promise<void> {
-      await authFetch(`/admin/${affiliateId}/mark-paid`, { method: "POST" });
+    async markPayoutPaid(affiliateId: string, note?: string): Promise<void> {
+      await authFetch(`/admin/${affiliateId}/mark-paid`, {
+        method: "POST",
+        body: note !== undefined ? JSON.stringify({ note }) : undefined,
+      });
     },
 
     async getCommissionSetting(): Promise<{ commissionPerConversion: number }> {
