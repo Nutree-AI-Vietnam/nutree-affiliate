@@ -76,7 +76,7 @@ export default async function handler(
         name: a.name,
         code: a.code ?? "",
         pendingTrials: convs.get("trial") ?? 0,
-        activeSubscriptions: convs.get("active") ?? 0,
+        activeSubscriptions: convs.get("converted") ?? 0,
         totalEarned: a.total_earned ?? 0,
         balance: a.balance ?? 0,
         hasBankInfo: !!a.bank_info,

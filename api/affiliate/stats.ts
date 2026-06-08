@@ -47,7 +47,7 @@ export default async function handler(
       totalEarned: wallet.total_earned,
       totalWithdrawn: wallet.total_withdrawn,
       pendingTrials: convMap.get("trial") ?? 0,
-      activeSubscriptions: convMap.get("active") ?? 0,
+      activeSubscriptions: convMap.get("converted") ?? 0,
     };
 
     res.status(200).json(stats);

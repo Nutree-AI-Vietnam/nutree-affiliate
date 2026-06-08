@@ -40,7 +40,7 @@ describe("GET /api/affiliate/stats", () => {
     mockSql
       .mockResolvedValueOnce([{ id: "aff-1" }])
       .mockResolvedValueOnce([{ balance: 600000, total_earned: 900000, total_withdrawn: 300000 }])
-      .mockResolvedValueOnce([{ status: "trial", count: "2" }, { status: "active", count: "3" }]);
+      .mockResolvedValueOnce([{ status: "trial", count: "2" }, { status: "converted", count: "3" }]);
 
     const handler = (await import("../stats")).default;
     const req = { headers: { authorization: "Bearer tok" }, method: "GET" } as never;
