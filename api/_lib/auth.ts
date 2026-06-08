@@ -26,8 +26,10 @@ export async function verifyAuth(req: VercelRequest): Promise<AuthUser> {
     throw new ApiError(401, "Missing or invalid Authorization header");
   }
   const token = authHeader.slice(7);
+  // initAdmin throws if FIREBASE_SERVICE_ACCOUNT is missing — keep outside try
+  // so a misconfiguration returns 500, not a misleading 401
+  initAdmin();
   try {
-    initAdmin();
     const decoded = await admin.auth().verifyIdToken(token);
     return {
       uid: decoded.uid,
