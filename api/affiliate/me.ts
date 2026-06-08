@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../_lib/db";
 import { verifyAuth, ApiError } from "../_lib/auth";
 import type { AffiliateProfile } from "../_lib/types";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 
 function generateReferralCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -13,12 +13,22 @@ async function createAffiliate(
   name: string,
   email: string
 ): Promise<{ affiliateId: string; code: string }> {
-  // Use users.id as affiliateId so FK constraints on referral_codes/wallets are satisfied
+  // Check for an existing users row first (for Nutree app users who become affiliates)
   const userRows = await sql`SELECT id FROM users WHERE firebase_uid = ${uid}`;
-  if (userRows.length === 0) {
-    throw new ApiError(404, "No Nutree account found for this Google account. Please sign up at nutree.app first.");
+  let affiliateId: string;
+
+  if (userRows.length > 0) {
+    affiliateId = (userRows[0] as { id: string }).id;
+  } else {
+    // New affiliate — create a stub users row so FK constraints are satisfied
+    affiliateId = randomUUID();
+    const username = `aff_${email.split("@")[0]}_${randomBytes(3).toString("hex")}`;
+    await sql`
+      INSERT INTO users (id, firebase_uid, email, username, password_hash, provider, is_active, onboarding_completed, last_accessed, created_at, updated_at)
+      VALUES (${affiliateId}, ${uid}, ${email}, ${username}, 'AFFILIATE_GOOGLE_AUTH', 'google', true, false, NOW(), NOW(), NOW())
+    `;
   }
-  const affiliateId = (userRows[0] as { id: string }).id;
+
   const code = generateReferralCode();
 
   await sql.transaction([
