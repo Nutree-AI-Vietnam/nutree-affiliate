@@ -114,7 +114,8 @@ export default async function handler(
       res.status(err.status).json({ error: err.message });
       return;
     }
-    console.error("/api/affiliate/me error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("/api/affiliate/me error FULL:", errMsg, JSON.stringify(err));
+    res.status(500).json({ error: "Internal server error", detail: errMsg });
   }
 }
