@@ -24,7 +24,7 @@ const mockSignIn = signInWithPopup as ReturnType<typeof vi.fn>;
 const mockSignOut = signOut as ReturnType<typeof vi.fn>;
 
 function setCurrentUser(user: { uid: string; displayName: string; email: string; getIdToken: () => Promise<string> } | null) {
-  (firebaseLib.auth as Record<string, unknown>).currentUser = user;
+  (firebaseLib.auth as unknown as Record<string, unknown>).currentUser = user;
 }
 
 function mockFetch(response: unknown, status = 200) {
