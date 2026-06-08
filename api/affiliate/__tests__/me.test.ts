@@ -59,17 +59,26 @@ describe("GET /api/affiliate/me", () => {
   });
 
   it("creates new affiliate on first login", async () => {
-    mockSql
-      .mockResolvedValueOnce([])  // affiliate not found
-      .mockResolvedValueOnce([])  // INSERT affiliates
-      .mockResolvedValueOnce([])  // INSERT referral_codes
-      .mockResolvedValueOnce([]); // INSERT referral_wallets
+    // sql is called once for the SELECT lookup; createAffiliate uses sql.transaction
+    mockSql.mockResolvedValueOnce([]); // affiliate not found
+    (mockSql as unknown as Record<string, ReturnType<typeof vi.fn>>)["transaction"] =
+      vi.fn().mockResolvedValueOnce([]);
 
     const handler = (await import("../me")).default;
     const req = { headers: { authorization: "Bearer tok" }, method: "GET" } as never;
     const res = makeRes();
     await handler(req, res as never);
     expect(res["statusCode"]).toBe(200);
-    expect(typeof (res["body"] as { referralCode: string }).referralCode).toBe("string");
+    const body = res["body"] as { referralCode: string };
+    expect(typeof body.referralCode).toBe("string");
+    expect(body.referralCode).toMatch(/^[0-9A-F]{8}$/);
+    // transaction was called once with 3 queries
+    expect(
+      (mockSql as unknown as Record<string, ReturnType<typeof vi.fn>>)["transaction"]
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      (mockSql as unknown as Record<string, ReturnType<typeof vi.fn>>)["transaction"].mock
+        .calls[0][0]
+    ).toHaveLength(3);
   });
 });

@@ -2,10 +2,10 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../_lib/db";
 import { verifyAuth, ApiError } from "../_lib/auth";
 import type { AffiliateProfile } from "../_lib/types";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 
-function generateReferralCode(affiliateId: string): string {
-  return affiliateId.replace(/-/g, "").slice(0, 8).toUpperCase();
+function generateReferralCode(): string {
+  return randomBytes(4).toString("hex").toUpperCase();
 }
 
 async function createAffiliate(
@@ -14,20 +14,22 @@ async function createAffiliate(
   email: string
 ): Promise<{ affiliateId: string; code: string }> {
   const affiliateId = randomUUID();
-  const code = generateReferralCode(affiliateId);
+  const code = generateReferralCode();
 
-  await sql`
-    INSERT INTO affiliates (id, firebase_uid, name, email, role)
-    VALUES (${affiliateId}, ${uid}, ${name}, ${email}, 'pt')
-  `;
-  await sql`
-    INSERT INTO referral_codes (user_id, code, created_at)
-    VALUES (${affiliateId}, ${code}, NOW())
-  `;
-  await sql`
-    INSERT INTO referral_wallets (user_id, balance, total_earned, total_revoked, total_withdrawn, updated_at)
-    VALUES (${affiliateId}, 0, 0, 0, 0, NOW())
-  `;
+  await sql.transaction([
+    sql`
+      INSERT INTO affiliates (id, firebase_uid, name, email, role)
+      VALUES (${affiliateId}, ${uid}, ${name}, ${email}, 'pt')
+    `,
+    sql`
+      INSERT INTO referral_codes (user_id, code, created_at)
+      VALUES (${affiliateId}, ${code}, NOW())
+    `,
+    sql`
+      INSERT INTO referral_wallets (user_id, balance, total_earned, total_revoked, total_withdrawn, updated_at)
+      VALUES (${affiliateId}, 0, 0, 0, 0, NOW())
+    `,
+  ]);
 
   return { affiliateId, code };
 }
