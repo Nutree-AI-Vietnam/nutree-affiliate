@@ -1,0 +1,56 @@
+// api/_lib/types.ts
+
+export interface AffiliateProfile {
+  affiliateId: string;
+  name: string;
+  email: string;
+  role: string;
+  referralCode: string;
+  referralLink: string;
+}
+
+export interface AffiliateStats {
+  balance: number;
+  totalEarned: number;
+  totalWithdrawn: number;
+  pendingTrials: number;
+  activeSubscriptions: number;
+}
+
+export interface PayoutRequest {
+  id: string;
+  amount: number;
+  status: string;
+  paymentMethod: string | null;
+  paymentDetails: Record<string, string> | null;
+  requestedAt: string;
+  completedAt: string | null;
+  adminNote: string | null;
+}
+
+export interface BankInfo {
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  routingOrSwift?: string;
+}
+
+export interface AdminAffiliateRow {
+  affiliateId: string;
+  name: string;
+  code: string;
+  pendingTrials: number;
+  activeSubscriptions: number;
+  totalEarned: number;
+  balance: number;
+  hasBankInfo: boolean;
+  lastPaidDate: string | null;
+}
+
+export interface AdminOverview {
+  totalRevenue: number;
+  totalPayoutOwed: number;
+  activeAffiliates: number;
+  commissionPerConversion: number;
+  affiliates: AdminAffiliateRow[];
+}
