@@ -264,4 +264,98 @@ describe("neonApi", () => {
       expect(typeof payouts[0].period).toBe("string");
     });
   });
+
+  describe("getAdminOverview()", () => {
+    it("maps AdminOverviewResponse to AdminOverview with derived totals", async () => {
+      const mockUser = {
+        uid: "u1", displayName: "Admin", email: "admin@t.com",
+        getIdToken: vi.fn().mockResolvedValue("tok"),
+      };
+      setCurrentUser(mockUser);
+      mockFetch({
+        totalRevenue: 1200000,
+        totalPayoutOwed: 900000,
+        activeAffiliates: 2,
+        commissionPerConversion: 300000,
+        affiliates: [
+          {
+            affiliateId: "a1", name: "Alex", code: "ABCD1234",
+            pendingTrials: 1, activeSubscriptions: 3,
+            totalEarned: 900000, balance: 600000,
+            hasBankInfo: true, lastPaidDate: "2026-05-03",
+          },
+          {
+            affiliateId: "a2", name: "Sam", code: "EFG56789",
+            pendingTrials: 0, activeSubscriptions: 1,
+            totalEarned: 300000, balance: 300000,
+            hasBankInfo: false, lastPaidDate: null,
+          },
+        ],
+      });
+
+      const api = createNeonApi();
+      const overview = await api.getAdminOverview();
+
+      expect(overview.totalRevenue).toBe(1200000);
+      expect(overview.totalPayoutOwed).toBe(900000);
+      expect(overview.activeAffiliates).toBe(2);
+      expect(overview.commissionPerConversion).toBe(300000);
+      expect(overview.pendingTrials).toBe(1);           // sum: 1 + 0
+      expect(overview.activeSubscriptions).toBe(4);     // sum: 3 + 1
+      expect(overview.affiliates[0].totalRevenue).toBe(900000);  // totalEarned → totalRevenue
+      expect(overview.affiliates[0].payoutOwed).toBe(600000);    // balance → payoutOwed
+      expect(overview.affiliates[1].hasBankInfo).toBe(false);
+    });
+  });
+
+  describe("markPayoutPaid()", () => {
+    it("POSTs to /api/admin/[id]/mark-paid", async () => {
+      const mockUser = {
+        uid: "u1", displayName: "Admin", email: "admin@t.com",
+        getIdToken: vi.fn().mockResolvedValue("tok"),
+      };
+      setCurrentUser(mockUser);
+      mockFetch({ ok: true });
+
+      const api = createNeonApi();
+      await api.markPayoutPaid("aff-123");
+
+      const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(fetchCall[0]).toContain("/admin/aff-123/mark-paid");
+      expect(fetchCall[1].method).toBe("POST");
+    });
+
+    it("includes note in request body when provided", async () => {
+      const mockUser = {
+        uid: "u1", displayName: "Admin", email: "admin@t.com",
+        getIdToken: vi.fn().mockResolvedValue("tok"),
+      };
+      setCurrentUser(mockUser);
+      mockFetch({ ok: true });
+
+      const api = createNeonApi();
+      await api.markPayoutPaid("aff-123", "Paid via bank transfer");
+
+      const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(JSON.parse(fetchCall[1].body as string)).toEqual({ note: "Paid via bank transfer" });
+    });
+  });
+
+  describe("getCommissionSetting()", () => {
+    it("returns commissionPerConversion from admin overview", async () => {
+      const mockUser = {
+        uid: "u1", displayName: "Admin", email: "admin@t.com",
+        getIdToken: vi.fn().mockResolvedValue("tok"),
+      };
+      setCurrentUser(mockUser);
+      mockFetch({
+        totalRevenue: 0, totalPayoutOwed: 0, activeAffiliates: 0,
+        commissionPerConversion: 300000, affiliates: [],
+      });
+
+      const api = createNeonApi();
+      const setting = await api.getCommissionSetting();
+      expect(setting.commissionPerConversion).toBe(300000);
+    });
+  });
 });
