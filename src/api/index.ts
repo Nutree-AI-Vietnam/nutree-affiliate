@@ -1,11 +1,12 @@
+// src/api/index.ts
 import { createContext, useContext } from "react";
 import type {
   Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview,
 } from "../types";
 
 export interface AffiliateApi {
-  login(email: string, password: string): Promise<Session>;
-  register(input: { email: string; password: string; name: string }): Promise<Session>;
+  login(): Promise<Session>;
+  register(): Promise<Session>;
   logout(): Promise<void>;
 
   getMyStats(): Promise<MyStats>;

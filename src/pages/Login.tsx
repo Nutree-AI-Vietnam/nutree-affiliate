@@ -305,7 +305,7 @@ export function Login() {
     setError("");
     setLoading(true);
     try {
-      const session = await api.login("", "");
+      const session = await api.login();
       saveSession(session);
       navigate(session.role === "admin" ? "/admin" : "/pt");
     } catch (err: unknown) {

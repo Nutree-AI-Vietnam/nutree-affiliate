@@ -12,7 +12,8 @@ describe("PT Dashboard", () => {
 
   it("shows the PT stats after loading", async () => {
     const api = createMockApi();
-    await api.login("alex@pt.com", "password");
+    api.loginAs("alex@pt.com");
+    await api.login();
     saveSession({ affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt" });
     render(
       <ApiContext.Provider value={api}>

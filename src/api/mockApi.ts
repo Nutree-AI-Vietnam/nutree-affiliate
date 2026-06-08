@@ -1,42 +1,44 @@
 import type { AffiliateApi } from "./index";
 import type { Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview } from "../types";
 import {
-  affiliates, adminSession, adminPassword, COMMISSION_PER_CONVERSION,
+  affiliates, adminSession, COMMISSION_PER_CONVERSION,
   toAffiliateRow, codeFromEmail, type FixtureAffiliate,
 } from "./fixtures";
 
 const delay = () => new Promise((r) => setTimeout(r, 150));
 
-export function createMockApi(): AffiliateApi {
+export interface MockApi extends AffiliateApi {
+  /** Test helper: set which user will be returned on the next login() call. */
+  loginAs(email: string): void;
+}
+
+export function createMockApi(): MockApi {
   const data: FixtureAffiliate[] = affiliates.map((a) => ({ ...a, bankInfo: a.bankInfo }));
   let current: Session | null = null;
-
-  const me = (): FixtureAffiliate => {
-    const found = data.find((a) => a.session.affiliateId === current?.affiliateId);
-    if (!found) throw new Error("Not authenticated as a PT");
-    return found;
-  };
+  // Default: first PT affiliate (alex@pt.com)
+  let nextLoginEmail: string = affiliates[0].session.email;
 
   return {
-    async login(email, password) {
+    loginAs(email: string) {
+      nextLoginEmail = email;
+    },
+
+    async login() {
       await delay();
-      if (email === adminSession.email && password === adminPassword) {
+      if (nextLoginEmail === adminSession.email) {
         current = adminSession; return adminSession;
       }
-      const a = data.find((x) => x.session.email === email);
-      if (!a || a.password !== password) throw new Error("Invalid email or password");
+      const a = data.find((x) => x.session.email === nextLoginEmail);
+      if (!a) throw new Error(`No fixture user with email: ${nextLoginEmail}`);
       current = a.session; return a.session;
     },
-    async register({ email, password, name }) {
+
+    async register() {
       await delay();
-      if (data.some((x) => x.session.email === email)) throw new Error("Email already registered");
-      const session: Session = { affiliateId: `a${data.length + 1}`, name, email, role: "pt" };
-      data.push({
-        session, password, bankInfo: null, pendingTrials: 0,
-        activeSubscriptions: 0, totalRevenue: 0, lastPaidDate: null, payouts: [],
-      });
-      current = session; return session;
+      // In Google-only flow, register behaves like login for the next queued user
+      return this.login();
     },
+
     async logout() { await delay(); current = null; },
 
     async getMyStats(): Promise<MyStats> {
@@ -82,4 +84,10 @@ export function createMockApi(): AffiliateApi {
     },
     async getCommissionSetting() { await delay(); return { commissionPerConversion: COMMISSION_PER_CONVERSION }; },
   };
+
+  function me(): FixtureAffiliate {
+    const found = data.find((a) => a.session.affiliateId === current?.affiliateId);
+    if (!found) throw new Error("Not authenticated as a PT");
+    return found;
+  }
 }

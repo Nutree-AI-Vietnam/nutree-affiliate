@@ -3,21 +3,24 @@ import { createMockApi } from "../mockApi";
 import { COMMISSION_PER_CONVERSION } from "../fixtures";
 
 describe("mockApi", () => {
-  it("logs in a PT with valid credentials", async () => {
+  it("logs in a PT via loginAs", async () => {
     const api = createMockApi();
-    const session = await api.login("alex@pt.com", "password");
+    api.loginAs("alex@pt.com");
+    const session = await api.login();
     expect(session.role).toBe("pt");
     expect(session.affiliateId).toBe("a1");
   });
 
-  it("rejects invalid credentials", async () => {
+  it("rejects login for unknown email", async () => {
     const api = createMockApi();
-    await expect(api.login("alex@pt.com", "wrong")).rejects.toThrow();
+    api.loginAs("unknown@example.com");
+    await expect(api.login()).rejects.toThrow();
   });
 
   it("computes totalPayout as activeSubscriptions * commission", async () => {
     const api = createMockApi();
-    await api.login("alex@pt.com", "password");
+    api.loginAs("alex@pt.com");
+    await api.login();
     const stats = await api.getMyStats();
     expect(stats.totalPayout).toBe(64 * COMMISSION_PER_CONVERSION);
     expect(stats.activeSubscriptions).toBe(64);
@@ -25,7 +28,8 @@ describe("mockApi", () => {
 
   it("returns admin overview with aggregated totals", async () => {
     const api = createMockApi();
-    await api.login("admin@nutree.app", "admin");
+    api.loginAs("admin@nutree.app");
+    await api.login();
     const overview = await api.getAdminOverview();
     expect(overview.affiliates.length).toBe(3);
     expect(overview.totalRevenue).toBe(4820 + 2310 + 3900);
@@ -34,7 +38,8 @@ describe("mockApi", () => {
 
   it("saves and returns bank info for current PT", async () => {
     const api = createMockApi();
-    await api.login("sam@pt.com", "password");
+    api.loginAs("sam@pt.com");
+    await api.login();
     expect(await api.getMyBankInfo()).toBeNull();
     const info = { bankName: "B", accountHolder: "H", accountNumber: "1" };
     await api.saveBankInfo(info);
