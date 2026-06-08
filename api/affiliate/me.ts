@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../_lib/db";
 import { verifyAuth, ApiError } from "../_lib/auth";
 import type { AffiliateProfile } from "../_lib/types";
-import { randomUUID, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 
 function generateReferralCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -13,7 +13,12 @@ async function createAffiliate(
   name: string,
   email: string
 ): Promise<{ affiliateId: string; code: string }> {
-  const affiliateId = randomUUID();
+  // Use users.id as affiliateId so FK constraints on referral_codes/wallets are satisfied
+  const userRows = await sql`SELECT id FROM users WHERE firebase_uid = ${uid}`;
+  if (userRows.length === 0) {
+    throw new ApiError(404, "No Nutree account found for this Google account. Please sign up at nutree.app first.");
+  }
+  const affiliateId = (userRows[0] as { id: string }).id;
   const code = generateReferralCode();
 
   await sql.transaction([
