@@ -103,10 +103,17 @@ export function Onboarding() {
                 <input
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))}
-                  placeholder="VD: MINHTU"
+                  placeholder="VD: TOBEY"
                   maxLength={8}
                   className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm font-mono tracking-widest text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
                 />
+                {code && (
+                  <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#F0FAF8] dark:bg-[#1A4739]/30 px-4 py-2.5">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Khách nhập:</span>
+                    <span className="font-mono font-bold tracking-widest text-[#1A4739] dark:text-[#29B6A1]">{code}</span>
+                    <span className="text-xs text-gray-400">→ giảm 20%</span>
+                  </div>
+                )}
                 <p className="mt-1.5 text-xs text-gray-400">Tối đa 8 ký tự, chỉ dùng chữ cái và số. Khách dùng mã này để được giảm 20%.</p>
               </div>
             </div>
@@ -129,28 +136,24 @@ export function Onboarding() {
                   className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
                 />
               </div>
-              {bankName.trim() && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Chủ tài khoản</label>
-                    <input
-                      value={accountHolder}
-                      onChange={(e) => setAccountHolder(e.target.value)}
-                      placeholder="NGUYEN VAN A"
-                      className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Số tài khoản</label>
-                    <input
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="0123456789"
-                      className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
-                    />
-                  </div>
-                </>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Chủ tài khoản</label>
+                <input
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                  placeholder="VD: NGUYEN VAN A"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Số tài khoản</label>
+                <input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="VD: 0123456789"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
+                />
+              </div>
             </div>
 
             {error && (
