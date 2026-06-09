@@ -29,17 +29,29 @@ export default async function handler(
       return;
     }
 
-    // Verify the target affiliate exists
-    const target = await sql`SELECT id FROM affiliates WHERE id = ${affiliateId}`;
+    const target = await sql`SELECT id, balance FROM affiliates WHERE id = ${affiliateId}`;
     if (target.length === 0) {
       res.status(404).json({ error: "Affiliate not found" });
       return;
     }
 
+    const note = (req.body as { note?: string } | undefined)?.note ?? null;
+    const balance = Number((target[0] as { balance: number }).balance);
+
+    if (balance <= 0) {
+      res.status(400).json({ error: "No balance to pay out" });
+      return;
+    }
+
+    // Record the payout and reset balance
     await sql`
-      UPDATE payout_requests
-      SET status = 'paid', completed_at = NOW(), updated_at = NOW()
-      WHERE user_id = ${affiliateId} AND status = 'pending'
+      INSERT INTO affiliate_payouts (affiliate_id, amount, status, admin_note, completed_at)
+      VALUES (${affiliateId}, ${balance}, 'paid', ${note}, NOW())
+    `;
+    await sql`
+      UPDATE affiliates
+      SET total_withdrawn = total_withdrawn + ${balance}, balance = 0, updated_at = NOW()
+      WHERE id = ${affiliateId}
     `;
 
     res.status(200).json({ ok: true });

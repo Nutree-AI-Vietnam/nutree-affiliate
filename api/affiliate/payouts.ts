@@ -27,8 +27,8 @@ export default async function handler(
     const rows = await sql`
       SELECT id, amount, status, payment_method, payment_details,
              requested_at, completed_at, admin_note
-      FROM payout_requests
-      WHERE user_id = ${affiliateId}
+      FROM affiliate_payouts
+      WHERE affiliate_id = ${affiliateId}
       ORDER BY requested_at DESC
     `;
 
@@ -43,7 +43,7 @@ export default async function handler(
       admin_note: string | null;
     }[]).map((r) => ({
       id: r.id,
-      amount: r.amount,
+      amount: Number(r.amount),
       status: r.status,
       paymentMethod: r.payment_method,
       paymentDetails: r.payment_details,

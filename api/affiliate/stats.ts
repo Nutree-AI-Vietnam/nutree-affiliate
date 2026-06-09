@@ -14,40 +14,29 @@ export default async function handler(
   try {
     const user = await verifyAuth(req);
 
-    const affiliates = await sql`
-      SELECT id FROM affiliates WHERE firebase_uid = ${user.uid}
+    const rows = await sql`
+      SELECT balance, total_earned, total_withdrawn, pending_trials, active_subscriptions
+      FROM affiliates WHERE firebase_uid = ${user.uid}
     `;
-    if (affiliates.length === 0) {
+    if (rows.length === 0) {
       res.status(404).json({ error: "Affiliate not found" });
       return;
     }
-    const affiliateId = (affiliates[0] as { id: string }).id;
 
-    const [wallets, conversions] = await Promise.all([
-      sql`SELECT balance, total_earned, total_withdrawn FROM referral_wallets WHERE user_id = ${affiliateId}`,
-      sql`
-        SELECT status, COUNT(*) as count
-        FROM referral_conversions
-        WHERE referrer_user_id = ${affiliateId}
-        GROUP BY status
-      `,
-    ]);
-
-    const wallet = (wallets[0] as { balance: number; total_earned: number; total_withdrawn: number }) ?? {
-      balance: 0, total_earned: 0, total_withdrawn: 0,
+    const aff = rows[0] as {
+      balance: number;
+      total_earned: number;
+      total_withdrawn: number;
+      pending_trials: number;
+      active_subscriptions: number;
     };
 
-    const convMap = new Map<string, number>();
-    for (const row of conversions as { status: string; count: string }[]) {
-      convMap.set(row.status, parseInt(row.count, 10));
-    }
-
     const stats: AffiliateStats = {
-      balance: wallet.balance,
-      totalEarned: wallet.total_earned,
-      totalWithdrawn: wallet.total_withdrawn,
-      pendingTrials: convMap.get("trial") ?? 0,
-      activeSubscriptions: convMap.get("converted") ?? 0,
+      balance: Number(aff.balance),
+      totalEarned: Number(aff.total_earned),
+      totalWithdrawn: Number(aff.total_withdrawn),
+      pendingTrials: aff.pending_trials,
+      activeSubscriptions: aff.active_subscriptions,
     };
 
     res.status(200).json(stats);
