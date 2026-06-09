@@ -36,7 +36,8 @@ async function authFetch<T>(
     throw new Error("Session expired");
   }
   if (!res.ok) {
-    throw new Error("Something went wrong. Please try again.");
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? "Something went wrong. Please try again.");
   }
   return res.json() as Promise<T>;
 }
@@ -185,7 +186,7 @@ export function createNeonApi(): AffiliateApi {
     async markPayoutPaid(affiliateId: string, note?: string): Promise<void> {
       await authFetch(`/admin/${affiliateId}/mark-paid`, {
         method: "POST",
-        body: note !== undefined ? JSON.stringify({ note }) : undefined,
+        body: JSON.stringify({ note: note ?? null }),
       });
     },
 

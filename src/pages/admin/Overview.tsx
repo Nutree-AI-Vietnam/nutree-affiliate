@@ -95,9 +95,17 @@ export function Overview() {
                       key: "action", header: "",
                       render: (r) => (
                         <button
-                          className="rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-80 active:scale-95"
+                          disabled={r.payoutOwed <= 0}
+                          className="rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                           style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
-                          onClick={async () => { await api.markPayoutPaid(r.affiliateId); await load(); }}
+                          onClick={async () => {
+                            try {
+                              await api.markPayoutPaid(r.affiliateId);
+                              await load();
+                            } catch (e) {
+                              alert(e instanceof Error ? e.message : "Lỗi không xác định");
+                            }
+                          }}
                         >
                           Đánh dấu đã trả
                         </button>
