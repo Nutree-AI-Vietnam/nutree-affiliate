@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApi } from "../api";
 import { saveSession } from "../auth/session";
 
-type Step = "landing" | "signin";
+type Step = "landing" | "signin" | "admin";
 
 /* ─── icons ─── */
 function CheckIcon() {
@@ -200,7 +200,7 @@ function WhyNutree() {
 }
 
 /* ─── landing hero ─── */
-function LandingView({ onApply }: { onApply: () => void }) {
+function LandingView({ onApply, onAdminLogin }: { onApply: () => void; onAdminLogin: () => void }) {
   return (
     <div className="relative z-10 flex flex-col gap-8 px-6 py-10">
       {/* Brand tag */}
@@ -288,6 +288,12 @@ function LandingView({ onApply }: { onApply: () => void }) {
       <div className="flex flex-col items-center gap-2 py-6 text-center text-xs text-neutral-400 dark:text-neutral-500">
         <img src="/logo-icon.png" alt="Nutree AI" className="h-6 w-6 rounded-md object-cover opacity-60" />
         <span>© 2025 Nutree AI. All rights reserved.</span>
+        <button
+          onClick={onAdminLogin}
+          className="mt-1 text-[11px] text-neutral-300 dark:text-neutral-600 hover:text-neutral-400 dark:hover:text-neutral-500 transition-colors"
+        >
+          Quản trị viên
+        </button>
       </div>
     </div>
   );
@@ -300,6 +306,37 @@ export function Login() {
   const [step, setStep] = useState<Step>("landing");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Admin login state
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
+  async function signInAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+      });
+      const data = await res.json() as { affiliateId?: string; name?: string; email?: string; role?: string; onboarded?: boolean; error?: string };
+      if (!res.ok) { setError(data.error ?? "Đăng nhập thất bại"); return; }
+      saveSession({
+        affiliateId: data.affiliateId!,
+        name: data.name!,
+        email: data.email!,
+        role: data.role as "admin",
+        onboarded: true,
+      });
+      navigate("/admin");
+    } catch {
+      setError("Lỗi kết nối, thử lại sau");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function signInWithGoogle() {
     setError("");
@@ -357,9 +394,11 @@ export function Login() {
         {/* Decorative side border lines */}
         <div className="pointer-events-none absolute left-0 top-0 h-full w-full border-x border-neutral-200 dark:border-white/10 [mask-image:linear-gradient(black_60%,transparent)]" />
 
-        {step === "landing" ? (
-          <LandingView onApply={() => setStep("signin")} />
-        ) : (
+        {step === "landing" && (
+          <LandingView onApply={() => setStep("signin")} onAdminLogin={() => setStep("admin")} />
+        )}
+
+        {step === "signin" && (
           <div className="relative z-10 flex flex-col gap-5 px-6 py-10 animate-[slideUp_0.5s_ease_both]" style={{ animationFillMode: "both" }}>
             <div>
               <span className="block font-mono text-xs font-medium uppercase tracking-widest text-[#29B6A1]">
@@ -372,12 +411,10 @@ export function Login() {
                 Đăng nhập để xem dashboard của bạn
               </p>
             </div>
-
             <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#2D2D2D] p-6 shadow-sm flex flex-col gap-4">
               {error && (
                 <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400">{error}</p>
               )}
-
               <button
                 onClick={signInWithGoogle}
                 disabled={loading}
@@ -392,6 +429,57 @@ export function Login() {
                 {loading ? "Đang đăng nhập…" : "Đăng nhập với Google"}
               </button>
             </div>
+          </div>
+        )}
+
+        {step === "admin" && (
+          <div className="relative z-10 flex flex-col gap-5 px-6 py-10 animate-[slideUp_0.5s_ease_both]" style={{ animationFillMode: "both" }}>
+            <div>
+              <span className="block font-mono text-xs font-medium uppercase tracking-widest text-[#29B6A1]">
+                Quản trị viên
+              </span>
+              <h1 className="mt-3 text-4xl font-medium leading-[1.1] tracking-[-0.8px] text-neutral-800 dark:text-white">
+                Admin Login
+              </h1>
+              <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+                Dành riêng cho quản trị viên Nutree
+              </p>
+            </div>
+            <form onSubmit={signInAdmin} className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#2D2D2D] p-6 shadow-sm flex flex-col gap-4">
+              {error && (
+                <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400">{error}</p>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="admin@nutreeai.com"
+                  required
+                  className="rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-neutral-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Mật khẩu</label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#1F1F1F] px-4 py-2.5 text-sm text-neutral-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="h-11 w-full rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[.98] disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
+              >
+                {loading ? "Đang đăng nhập…" : "Đăng nhập"}
+              </button>
+            </form>
           </div>
         )}
       </div>
