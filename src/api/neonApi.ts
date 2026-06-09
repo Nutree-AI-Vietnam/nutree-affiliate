@@ -1,6 +1,7 @@
 // src/api/neonApi.ts
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
+import { loadSession } from "../auth/session";
 import type { AffiliateApi } from "./index";
 import type {
   Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview, AffiliateRow,
@@ -12,9 +13,16 @@ async function authFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Not authenticated");
-  const token = await user.getIdToken();
+  // Admin users have no Firebase session — use their signed adminToken instead
+  const session = loadSession();
+  let token: string;
+  if (session?.role === "admin" && session.adminToken) {
+    token = session.adminToken;
+  } else {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Not authenticated");
+    token = await user.getIdToken();
+  }
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -24,7 +32,7 @@ async function authFetch<T>(
     },
   });
   if (res.status === 401) {
-    await signOut(auth);
+    if (!session?.adminToken) await signOut(auth);
     throw new Error("Session expired");
   }
   if (!res.ok) {

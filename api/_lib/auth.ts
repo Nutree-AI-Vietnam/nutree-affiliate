@@ -1,6 +1,7 @@
 // api/_lib/auth.ts
 import type { VercelRequest } from "@vercel/node";
 import admin from "firebase-admin";
+import { createHmac } from "crypto";
 
 function initAdmin() {
   if (admin.apps.length > 0) return;
@@ -18,6 +19,36 @@ export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
   }
+}
+
+function adminSecret(): string {
+  return process.env.DATABASE_URL ?? "nutree-admin-secret";
+}
+
+export function signAdminToken(affiliateId: string): string {
+  const hmac = createHmac("sha256", adminSecret()).update(affiliateId).digest("hex");
+  return `admin.${affiliateId}.${hmac}`;
+}
+
+export interface AdminSessionUser {
+  affiliateId: string;
+}
+
+export function verifyAdminSession(req: VercelRequest): AdminSessionUser {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer admin.")) {
+    throw new ApiError(401, "Not authenticated");
+  }
+  const parts = authHeader.slice(7).split("."); // ["admin", affiliateId, hmac]
+  if (parts.length !== 3 || parts[0] !== "admin") {
+    throw new ApiError(401, "Invalid admin token");
+  }
+  const [, affiliateId, hmac] = parts;
+  const expected = createHmac("sha256", adminSecret()).update(affiliateId).digest("hex");
+  if (hmac !== expected) {
+    throw new ApiError(401, "Invalid admin token");
+  }
+  return { affiliateId };
 }
 
 export async function verifyAuth(req: VercelRequest): Promise<AuthUser> {

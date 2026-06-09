@@ -315,7 +315,7 @@ export function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: adminEmail, password: adminPassword }),
       });
-      const data = await res.json() as { affiliateId?: string; name?: string; email?: string; role?: string; onboarded?: boolean; error?: string };
+      const data = await res.json() as { affiliateId?: string; name?: string; email?: string; role?: string; onboarded?: boolean; adminToken?: string; error?: string };
       if (!res.ok) { setError(data.error ?? "Đăng nhập thất bại"); return; }
       saveSession({
         affiliateId: data.affiliateId!,
@@ -323,6 +323,7 @@ export function Login() {
         email: data.email!,
         role: data.role as "admin",
         onboarded: true,
+        adminToken: data.adminToken,
       });
       navigate("/admin");
     } catch {

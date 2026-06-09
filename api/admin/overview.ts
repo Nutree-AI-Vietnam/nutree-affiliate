@@ -1,7 +1,7 @@
 // api/admin/overview.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
+import { verifyAdminSession, ApiError } from "../_lib/auth";
 import type { AdminOverview, AdminAffiliateRow } from "../_lib/types";
 
 const COMMISSION_PER_CONVERSION = 300_000; // VND
@@ -15,16 +15,7 @@ export default async function handler(
     return;
   }
   try {
-    const user = await verifyAuth(req);
-
-    // Check admin role
-    const callerRows = await sql`
-      SELECT role FROM affiliates WHERE firebase_uid = ${user.uid}
-    `;
-    if (callerRows.length === 0 || (callerRows[0] as { role: string }).role !== "admin") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
+    verifyAdminSession(req);
 
     // All PT affiliates — fully self-contained in affiliates table
     const allAffiliates = await sql`
