@@ -40,6 +40,7 @@ interface AffiliateProfile {
   role: string;
   referralCode: string;
   referralLink: string;
+  onboarded: boolean;
 }
 
 interface AffiliateStats {

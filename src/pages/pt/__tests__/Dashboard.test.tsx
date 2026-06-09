@@ -14,7 +14,7 @@ describe("PT Dashboard", () => {
     const api = createMockApi();
     api.loginAs("alex@pt.com");
     await api.login();
-    saveSession({ affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt" });
+    saveSession({ affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt", onboarded: true });
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>

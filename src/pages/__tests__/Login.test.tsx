@@ -35,7 +35,7 @@ describe("Login", () => {
   it("navigates to /pt on successful Google sign-in as PT", async () => {
     const api = makeMockApiWithGoogle({
       login: vi.fn().mockResolvedValue({
-        affiliateId: "uid1", name: "Alex", email: "alex@test.com", role: "pt",
+        affiliateId: "uid1", name: "Alex", email: "alex@test.com", role: "pt", onboarded: true,
       }),
     });
     setup(api);
@@ -47,7 +47,7 @@ describe("Login", () => {
   it("navigates to /admin on successful Google sign-in as admin", async () => {
     const api = makeMockApiWithGoogle({
       login: vi.fn().mockResolvedValue({
-        affiliateId: "uid2", name: "Admin", email: "admin@test.com", role: "admin",
+        affiliateId: "uid2", name: "Admin", email: "admin@test.com", role: "admin", onboarded: true,
       }),
     });
     setup(api);

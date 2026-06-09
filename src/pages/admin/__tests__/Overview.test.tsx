@@ -13,7 +13,7 @@ describe("Admin Overview", () => {
 
   it("shows total revenue and the affiliate table", async () => {
     const api = createMockApi();
-    saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin" });
+    saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin", onboarded: true });
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>
@@ -28,7 +28,7 @@ describe("Admin Overview", () => {
 
   it("filters affiliates by search", async () => {
     const api = createMockApi();
-    saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin" });
+    saveSession({ affiliateId: "admin1", name: "Admin", email: "admin@nutree.app", role: "admin", onboarded: true });
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>

@@ -9,13 +9,13 @@ describe("session storage", () => {
   });
 
   it("saves and loads a session", () => {
-    const s = { affiliateId: "a1", name: "A", email: "a@x.com", role: "pt" as const };
+    const s = { affiliateId: "a1", name: "A", email: "a@x.com", role: "pt" as const, onboarded: true };
     saveSession(s);
     expect(loadSession()).toEqual(s);
   });
 
   it("clears the session", () => {
-    saveSession({ affiliateId: "a1", name: "A", email: "a@x.com", role: "pt" });
+    saveSession({ affiliateId: "a1", name: "A", email: "a@x.com", role: "pt", onboarded: true });
     clearSession();
     expect(loadSession()).toBeNull();
   });

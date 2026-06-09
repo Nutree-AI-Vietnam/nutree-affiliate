@@ -26,13 +26,13 @@ describe("RequireRole", () => {
   });
 
   it("redirects when role does not match", () => {
-    saveSession({ affiliateId: "a1", name: "A", email: "a@x.com", role: "pt" });
+    saveSession({ affiliateId: "a1", name: "A", email: "a@x.com", role: "pt", onboarded: true });
     renderAt("/admin");
     expect(screen.getByText("login page")).toBeInTheDocument();
   });
 
   it("renders the child route when role matches", () => {
-    saveSession({ affiliateId: "admin1", name: "Admin", email: "a@n.com", role: "admin" });
+    saveSession({ affiliateId: "admin1", name: "Admin", email: "a@n.com", role: "admin", onboarded: true });
     renderAt("/admin");
     expect(screen.getByText("admin area")).toBeInTheDocument();
   });

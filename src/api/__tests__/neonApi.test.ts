@@ -59,7 +59,7 @@ describe("neonApi", () => {
         affiliateId: "aff-1",
         name: "Alex",
         email: "alex@test.com",
-        role: "pt",
+        role: "pt", onboarded: true,
         referralCode: "ABCD1234",
         referralLink: "https://nutree.app/r/ABCD1234",
       });
@@ -71,7 +71,7 @@ describe("neonApi", () => {
         affiliateId: "aff-1",
         name: "Alex",
         email: "alex@test.com",
-        role: "pt",
+        role: "pt", onboarded: true,
       });
     });
   });

@@ -15,7 +15,7 @@ export interface FixtureAffiliate {
 
 export const affiliates: FixtureAffiliate[] = [
   {
-    session: { affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt" },
+    session: { affiliateId: "a1", name: "Alex R.", email: "alex@pt.com", role: "pt", onboarded: true },
     password: "password",
     bankInfo: { bankName: "Chase", accountHolder: "Alex Reed", accountNumber: "000123456", routingOrSwift: "021000021" },
     pendingTrials: 12,
@@ -28,7 +28,7 @@ export const affiliates: FixtureAffiliate[] = [
     ],
   },
   {
-    session: { affiliateId: "a2", name: "Sam T.", email: "sam@pt.com", role: "pt" },
+    session: { affiliateId: "a2", name: "Sam T.", email: "sam@pt.com", role: "pt", onboarded: true },
     password: "password",
     bankInfo: null,
     pendingTrials: 5,
@@ -38,7 +38,7 @@ export const affiliates: FixtureAffiliate[] = [
     payouts: [{ period: "2026-06", conversions: 2, amount: 20, status: "pending", paidDate: null }],
   },
   {
-    session: { affiliateId: "a3", name: "Jo K.", email: "jo@pt.com", role: "pt" },
+    session: { affiliateId: "a3", name: "Jo K.", email: "jo@pt.com", role: "pt", onboarded: true },
     password: "password",
     bankInfo: { bankName: "Wells Fargo", accountHolder: "Jo King", accountNumber: "000987654" },
     pendingTrials: 9,
@@ -50,7 +50,7 @@ export const affiliates: FixtureAffiliate[] = [
 ];
 
 export const adminSession: Session = {
-  affiliateId: "admin1", name: "Nutree Admin", email: "admin@nutree.app", role: "admin",
+  affiliateId: "admin1", name: "Nutree Admin", email: "admin@nutree.app", role: "admin", onboarded: true,
 };
 export const adminPassword = "admin";
 
