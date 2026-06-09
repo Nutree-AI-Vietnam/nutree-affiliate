@@ -5,6 +5,7 @@ export interface Session {
   name: string;
   email: string;
   role: Role;
+  onboarded: boolean;
 }
 
 export interface MyStats {

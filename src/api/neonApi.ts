@@ -89,6 +89,7 @@ export function createNeonApi(): AffiliateApi {
         name: profile.name,
         email: profile.email,
         role: profile.role as "pt" | "admin",
+        onboarded: profile.onboarded,
       };
     },
 

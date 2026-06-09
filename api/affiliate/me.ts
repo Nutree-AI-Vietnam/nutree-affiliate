@@ -20,29 +20,28 @@ export default async function handler(
     const user = await verifyAuth(req);
 
     let rows = await sql`
-      SELECT id, name, email, role, referral_code FROM affiliates WHERE firebase_uid = ${user.uid}
+      SELECT id, name, email, role, referral_code, onboarded FROM affiliates WHERE firebase_uid = ${user.uid}
     `;
 
     if (rows.length === 0) {
-      // First login — create affiliate record (self-contained, no users FK needed)
+      // First login — create affiliate record with a temp code; onboarded=false
       let code = generateReferralCode();
-      // Retry once on collision
       try {
         await sql`
-          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions)
-          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0)
+          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions, onboarded)
+          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0, false)
         `;
       } catch {
         code = generateReferralCode();
         await sql`
-          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions)
-          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0)
+          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions, onboarded)
+          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0, false)
         `;
       }
-      rows = await sql`SELECT id, name, email, role, referral_code FROM affiliates WHERE firebase_uid = ${user.uid}`;
+      rows = await sql`SELECT id, name, email, role, referral_code, onboarded FROM affiliates WHERE firebase_uid = ${user.uid}`;
     }
 
-    const aff = rows[0] as { id: string; name: string; email: string; role: string; referral_code: string };
+    const aff = rows[0] as { id: string; name: string; email: string; role: string; referral_code: string; onboarded: boolean };
     const profile: AffiliateProfile = {
       affiliateId: aff.id,
       name: aff.name,
@@ -50,6 +49,7 @@ export default async function handler(
       role: aff.role,
       referralCode: aff.referral_code,
       referralLink: `https://apps.apple.com/vn/app/nutree-eat-with-science/id6751159552`,
+      onboarded: aff.onboarded,
     };
 
     res.status(200).json(profile);
