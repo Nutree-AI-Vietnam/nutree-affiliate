@@ -446,7 +446,7 @@ export function Login() {
                     type="email"
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="admin@nutreeai.com"
+                    placeholder="Email"
                     className="rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#1F1F1F] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
                   />
                 </div>
@@ -456,7 +456,7 @@ export function Login() {
                     type="password"
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Mật khẩu"
                     className="rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#1F1F1F] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-[#29B6A1] focus:outline-none focus:ring-2 focus:ring-[#29B6A1]/20"
                   />
                 </div>
