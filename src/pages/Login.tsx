@@ -307,7 +307,13 @@ export function Login() {
     try {
       const session = await api.login();
       saveSession(session);
-      navigate(session.role === "admin" ? "/admin" : "/pt");
+      if (session.role === "admin") {
+        navigate("/admin");
+      } else if (!session.onboarded) {
+        navigate("/pt/onboarding");
+      } else {
+        navigate("/pt");
+      }
     } catch (err: unknown) {
       // Popup closed by user — ignore
       if ((err as { code?: string }).code === "auth/popup-closed-by-user") return;
