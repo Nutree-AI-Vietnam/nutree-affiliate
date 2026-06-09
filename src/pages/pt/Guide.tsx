@@ -4,7 +4,7 @@ import { ptLinks } from "./nav";
 const STEPS = [
   {
     title: "Bước 1 — Tải ứng dụng Nutree",
-    desc: "Khách hàng vào App Store và tải ứng dụng Nutree AI về điện thoại.",
+    desc: "Khách hàng vào App Store và tải ứng dụng Nutree về điện thoại.",
   },
   {
     title: "Bước 2 — Mở ứng dụng & chọn đăng ký",
@@ -32,7 +32,7 @@ export function Guide() {
           style={{ background: "linear-gradient(160deg, #1A4739 0%, #29B6A1 100%)" }}
         >
           <h1 className="text-2xl font-extrabold mb-1">Hướng dẫn dành cho Affiliate</h1>
-          <p className="text-white/70 text-sm">Mọi thứ bạn cần biết để bắt đầu kiếm thu nhập cùng Nutree AI.</p>
+          <p className="text-white/70 text-sm">Mọi thứ bạn cần biết để bắt đầu kiếm thu nhập cùng Nutree Affiliate.</p>
         </div>
 
         {/* Payout date */}

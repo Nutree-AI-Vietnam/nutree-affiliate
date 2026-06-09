@@ -22,7 +22,7 @@ export function NavBar({ links, title }: { links: { to: string; label: string }[
       <div className="flex items-center justify-between px-4 py-3">
         {/* Logo */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <img src="/logo-icon.png" alt="Nutree AI" className="h-9 w-9 rounded-xl object-cover flex-shrink-0" />
+          <img src="/logo-icon.png" alt="Nutree Affiliate" className="h-9 w-9 rounded-xl object-cover flex-shrink-0" />
           <div className="leading-none min-w-0">
             <span className="font-extrabold text-white tracking-tight whitespace-nowrap">
               Nutree <span className="font-extrabold" style={{ color: "#7FE0D2" }}>AI</span>

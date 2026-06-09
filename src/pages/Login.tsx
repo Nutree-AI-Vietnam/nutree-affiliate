@@ -136,7 +136,7 @@ function WhyNutree() {
     },
     {
       icon: "📱",
-      title: "Nutree AI — dinh dưỡng thông minh cho người Việt",
+      title: "Nutree — dinh dưỡng thông minh cho người Việt",
       desc: "Ứng dụng được xây dựng riêng cho thói quen ăn uống Việt Nam, với AI cá nhân hóa kế hoạch dinh dưỡng cho từng người.",
     },
     {
@@ -187,7 +187,7 @@ function WhyNutree() {
           <p className="text-lg font-semibold leading-snug">
             "Chúng tôi tin rằng mỗi người Việt Nam đều xứng đáng được sống khỏe mạnh — và bạn là người giúp điều đó xảy ra."
           </p>
-          <p className="mt-3 text-sm text-white/70">— Đội ngũ Nutree AI</p>
+          <p className="mt-3 text-sm text-white/70">— Đội ngũ Nutree Affiliate</p>
         </div>
         {/* bg decoration */}
         <svg className="pointer-events-none absolute -right-8 -top-8 opacity-10" width="160" height="160" viewBox="0 0 160 160" fill="none">
@@ -211,7 +211,7 @@ function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => 
       {/* Hero headline */}
       <div className="animate-[slideUp_0.7s_ease_both_100ms]" style={{ animationFillMode: "both" }}>
         <h1 className="text-5xl font-medium leading-[1.1] tracking-[-0.96px] text-neutral-800 dark:text-white">
-          Chia sẻ Nutree AI.{" "}
+          Chia sẻ Nutree.{" "}
           <span className="text-neutral-400 dark:text-neutral-500">Nhận hoa hồng.</span>
         </h1>
       </div>
@@ -221,7 +221,7 @@ function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => 
         className="text-base text-neutral-600 dark:text-neutral-400 leading-6 tracking-[-0.02em] max-w-sm animate-[slideUp_0.7s_ease_both_200ms]"
         style={{ animationFillMode: "both" }}
       >
-        Giới thiệu Nutree AI đến cộng đồng, học viên hoặc mạng lưới của bạn. Kiếm{" "}
+        Giới thiệu Nutree đến cộng đồng, học viên hoặc mạng lưới của bạn. Kiếm{" "}
         <strong className="font-semibold text-neutral-800 dark:text-white">300.000 ₫</strong> cho mỗi người dùng mua app.
       </p>
 
@@ -247,7 +247,7 @@ function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => 
         <div className="relative overflow-hidden rounded-[10px] border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#2D2D2D] p-5">
           <p className="text-3xl font-semibold text-neutral-800 dark:text-white">300k ₫</p>
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Hoa hồng mỗi user</p>
-          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">mua app Nutree AI</p>
+          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">mua app Nutree</p>
         </div>
         <div className="relative overflow-hidden rounded-[10px] border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#2D2D2D] p-5">
           <p className="text-3xl font-semibold text-neutral-800 dark:text-white">20%</p>
@@ -286,8 +286,8 @@ function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => 
 
       {/* Footer */}
       <div className="flex flex-col items-center gap-2 py-6 text-center text-xs text-neutral-400 dark:text-neutral-500">
-        <img src="/logo-icon.png" alt="Nutree AI" className="h-6 w-6 rounded-md object-cover opacity-60" />
-        <span>© 2025 Nutree AI. All rights reserved.</span>
+        <img src="/logo-icon.png" alt="Nutree Affiliate" className="h-6 w-6 rounded-md object-cover opacity-60" />
+        <span>© 2025 Nutree Affiliate. All rights reserved.</span>
       </div>
     </div>
   );
@@ -359,8 +359,8 @@ export function Login() {
       {/* Sticky navbar */}
       <nav className="sticky top-0 z-20 mx-px flex items-center justify-between bg-white/90 dark:bg-[#1F1F1F]/90 px-6 py-4 backdrop-blur-sm border-b border-neutral-100 dark:border-white/10">
         <button onClick={() => setStep("landing")} className="flex items-center gap-2 transition-opacity hover:opacity-70">
-          <img src="/logo-icon.png" alt="Nutree AI" className="h-7 w-7 rounded-lg object-cover" />
-          <span className="font-semibold text-sm text-neutral-800 dark:text-white">Nutree AI</span>
+          <img src="/logo-icon.png" alt="Nutree Affiliate" className="h-7 w-7 rounded-lg object-cover" />
+          <span className="font-semibold text-sm text-neutral-800 dark:text-white">Nutree Affiliate</span>
         </button>
 
         {step === "landing" ? (
@@ -438,7 +438,7 @@ export function Login() {
                 <div className="flex-1 h-px bg-neutral-200 dark:bg-white/10" />
               </div>
               <form onSubmit={signInAdmin} className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#2D2D2D] p-5 shadow-sm flex flex-col gap-3">
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Tài khoản được cấp riêng bởi Nutree AI.</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">Tài khoản được cấp riêng bởi Nutree Affiliate.</p>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Email</label>
                   <input

@@ -61,7 +61,7 @@ export function Onboarding() {
         className="px-6 py-5 flex items-center gap-3"
         style={{ background: "linear-gradient(160deg, #1A4739 0%, #29B6A1 100%)" }}
       >
-        <img src="/logo-icon.png" alt="Nutree AI" className="h-9 w-9 rounded-xl object-cover" />
+        <img src="/logo-icon.png" alt="Nutree Affiliate" className="h-9 w-9 rounded-xl object-cover" />
         <div>
           <div className="font-extrabold text-white">
             Nutree <span style={{ color: "#7FE0D2" }}>AI</span>

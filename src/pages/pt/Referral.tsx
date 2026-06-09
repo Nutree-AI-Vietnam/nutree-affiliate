@@ -134,7 +134,7 @@ export function Referral() {
                 </button>
               </div>
               <p className="mt-3 text-sm text-gray-500 dark:text-[#B0B0B0]">
-                Chia sẻ link này với khách hàng để nhận hoa hồng khi họ đăng ký Nutree AI.
+                Chia sẻ link này với khách hàng để nhận hoa hồng khi họ đăng ký Nutree.
               </p>
             </div>
           </div>
