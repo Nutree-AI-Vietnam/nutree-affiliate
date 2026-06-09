@@ -49,7 +49,7 @@ export default async function handler(
       email: aff.email,
       role: aff.role,
       referralCode: aff.referral_code,
-      referralLink: `https://nutree.app/r/${aff.referral_code}`,
+      referralLink: `https://apps.apple.com/vn/app/nutree-eat-with-science/id6751159552`,
     };
 
     res.status(200).json(profile);
