@@ -1,13 +1,8 @@
 // api/_lib/auth.ts
 import type { VercelRequest } from "@vercel/node";
-import admin from "firebase-admin";
 import { createHmac } from "crypto";
-
-function initAdmin() {
-  if (admin.apps.length > 0) return;
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
-  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-}
+import { createRemoteJWKSet, jwtVerify } from "jose";
+import type { JWTPayload } from "jose";
 
 export interface AuthUser {
   uid: string;
@@ -22,7 +17,9 @@ export class ApiError extends Error {
 }
 
 function adminSecret(): string {
-  return process.env.DATABASE_URL ?? "nutree-admin-secret";
+  const s = process.env.AFFILIATE_ADMIN_SECRET;
+  if (!s) throw new ApiError(500, "Admin auth not configured");
+  return s;
 }
 
 export function signAdminToken(affiliateId: string): string {
@@ -51,23 +48,58 @@ export function verifyAdminSession(req: VercelRequest): AdminSessionUser {
   return { affiliateId };
 }
 
+let cachedAuthBaseUrl: string | null = null;
+let cachedJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function neonAuthBaseUrl(): string {
+  const baseUrl = process.env.NEON_AUTH_BASE_URL || process.env.VITE_NEON_AUTH_URL;
+  if (!baseUrl) throw new ApiError(500, "Neon Auth not configured");
+  return baseUrl.replace(/\/$/, "");
+}
+
+function neonJwks() {
+  const baseUrl = neonAuthBaseUrl();
+  if (!cachedJwks || cachedAuthBaseUrl !== baseUrl) {
+    cachedAuthBaseUrl = baseUrl;
+    cachedJwks = createRemoteJWKSet(
+      new URL(`${baseUrl}/.well-known/jwks.json`),
+      { timeoutDuration: 15_000 },
+    );
+  }
+  return cachedJwks;
+}
+
+function toAuthUser(payload: JWTPayload): AuthUser {
+  const uid = typeof payload.sub === "string"
+    ? payload.sub
+    : typeof payload.id === "string"
+      ? payload.id
+      : "";
+  if (!uid) throw new ApiError(401, "Invalid token subject");
+  const name = typeof payload.name === "string" && payload.name
+    ? payload.name
+    : typeof payload.email === "string" && payload.email
+      ? payload.email
+      : "Affiliate";
+  const email = typeof payload.email === "string" ? payload.email : "";
+  return { uid, name, email };
+}
+
 export async function verifyAuth(req: VercelRequest): Promise<AuthUser> {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     throw new ApiError(401, "Missing or invalid Authorization header");
   }
   const token = authHeader.slice(7);
-  // initAdmin throws if FIREBASE_SERVICE_ACCOUNT is missing — keep outside try
-  // so a misconfiguration returns 500, not a misleading 401
-  initAdmin();
+  const baseUrl = neonAuthBaseUrl();
+
   try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    return {
-      uid: decoded.uid,
-      name: (decoded.name as string) ?? decoded.email ?? "Affiliate",
-      email: (decoded.email as string) ?? "",
-    };
-  } catch {
+    const { payload } = await jwtVerify(token, neonJwks(), {
+      issuer: new URL(baseUrl).origin,
+    });
+    return toAuthUser(payload);
+  } catch (err) {
+    console.error("Neon Auth token validation failed:", err instanceof Error ? err.message : err);
     throw new ApiError(401, "Invalid or expired token");
   }
 }

@@ -1,9 +1,6 @@
 {
   "buildCommand": "npm run build",
+  "devCommand": "node ./node_modules/vite/bin/vite.js --host 0.0.0.0 --port $PORT",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "framework": "vite"
 }

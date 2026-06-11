@@ -1,10 +1,13 @@
+// api/affiliate/me.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../_lib/db";
 import { verifyAuth, ApiError } from "../_lib/auth";
 import type { AffiliateProfile } from "../_lib/types";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 
-function generateReferralCode(): string {
+const APP_STORE_LINK = "https://apps.apple.com/vn/app/nutree-eat-with-science/id6751159552";
+
+function generateCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
 }
 
@@ -19,39 +22,55 @@ export default async function handler(
   try {
     const user = await verifyAuth(req);
 
-    let rows = await sql`
-      SELECT id, name, email, role, referral_code, onboarded FROM affiliates WHERE firebase_uid = ${user.uid}
+    const rows = await sql`
+      SELECT id, display_name, email, partner_type, role, onboarded
+      FROM affiliates WHERE auth_provider = 'neon' AND auth_subject_id = ${user.uid}
     `;
 
-    if (rows.length === 0) {
-      // First login — create affiliate record with a temp code; onboarded=false
-      let code = generateReferralCode();
-      try {
-        await sql`
-          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions, onboarded)
-          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0, false)
-        `;
-      } catch {
-        code = generateReferralCode();
-        await sql`
-          INSERT INTO affiliates (id, firebase_uid, name, email, role, referral_code, balance, total_earned, total_withdrawn, pending_trials, active_subscriptions, onboarded)
-          VALUES (gen_random_uuid(), ${user.uid}, ${user.name}, ${user.email}, 'pt', ${code}, 0, 0, 0, 0, 0, false)
-        `;
-      }
-      rows = await sql`SELECT id, name, email, role, referral_code, onboarded FROM affiliates WHERE firebase_uid = ${user.uid}`;
+    if (rows.length > 0) {
+      const aff = rows[0] as {
+        id: string; display_name: string; email: string;
+        partner_type: string | null; role: string; onboarded: boolean;
+      };
+      const codeRows = await sql`
+        SELECT code FROM affiliate_codes
+        WHERE affiliate_id = ${aff.id} AND status = 'active'
+        ORDER BY created_at LIMIT 1
+      `;
+      const code = (codeRows[0] as { code: string } | undefined)?.code ?? "";
+      const profile: AffiliateProfile = {
+        affiliateId: aff.id,
+        name: aff.display_name,
+        email: aff.email,
+        role: aff.partner_type ?? "pt",
+        referralCode: code,
+        referralLink: APP_STORE_LINK,
+        onboarded: aff.onboarded,
+      };
+      res.status(200).json(profile);
+      return;
     }
 
-    const aff = rows[0] as { id: string; name: string; email: string; role: string; referral_code: string; onboarded: boolean };
-    const profile: AffiliateProfile = {
-      affiliateId: aff.id,
-      name: aff.name,
-      email: aff.email,
-      role: aff.role,
-      referralCode: aff.referral_code,
-      referralLink: `https://apps.apple.com/vn/app/nutree-eat-with-science/id6751159552`,
-      onboarded: aff.onboarded,
-    };
+    // First login — create affiliate + code in one atomic transaction
+    const newId = randomUUID();
+    const code = generateCode();
+    await sql.transaction([
+      sql`INSERT INTO affiliates (id, auth_provider, auth_subject_id, email, display_name, partner_type, role, status, onboarded)
+          VALUES (${newId}, 'neon', ${user.uid}, ${user.email}, ${user.name}, 'pt', 'affiliate', 'pending', false)`,
+      sql`INSERT INTO affiliate_codes (id, affiliate_id, code, status)
+          VALUES (${randomUUID()}, ${newId}, ${code}, 'active')`,
+      sql`SELECT id FROM affiliates WHERE id = ${newId}`,
+    ]);
 
+    const profile: AffiliateProfile = {
+      affiliateId: newId,
+      name: user.name,
+      email: user.email,
+      role: "pt",
+      referralCode: code,
+      referralLink: APP_STORE_LINK,
+      onboarded: false,
+    };
     res.status(200).json(profile);
   } catch (err) {
     if (err instanceof ApiError) {

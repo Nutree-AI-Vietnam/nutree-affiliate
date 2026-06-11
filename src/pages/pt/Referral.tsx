@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useApi } from "../../api";
 import { NavBar } from "../../components/NavBar";
 import { QrCode } from "../../components/QrCode";
+import { getNeonAuthToken } from "../../lib/neon-auth";
 import type { ReferralInfo } from "../../types";
 import { ptLinks } from "./nav";
 
@@ -37,7 +38,7 @@ export function Referral() {
     try {
       const res = await fetch("/api/affiliate/referral-code", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await import("../../lib/firebase").then(m => m.auth.currentUser?.getIdToken())}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getNeonAuthToken()}` },
         body: JSON.stringify({ code: trimmed }),
       });
       const data = await res.json() as { code?: string; error?: string };

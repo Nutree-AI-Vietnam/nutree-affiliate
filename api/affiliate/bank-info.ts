@@ -16,7 +16,7 @@ export default async function handler(
     const user = await verifyAuth(req);
 
     const affiliates = await sql`
-      SELECT id FROM affiliates WHERE firebase_uid = ${user.uid}
+      SELECT id FROM affiliates WHERE auth_provider = 'neon' AND auth_subject_id = ${user.uid}
     `;
     if (affiliates.length === 0) {
       res.status(404).json({ error: "Affiliate not found" });

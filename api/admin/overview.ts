@@ -4,7 +4,7 @@ import { sql } from "../_lib/db";
 import { verifyAdminSession, ApiError } from "../_lib/auth";
 import type { AdminOverview, AdminAffiliateRow } from "../_lib/types";
 
-const COMMISSION_PER_CONVERSION = 300_000; // VND
+const COMMISSION_PER_CONVERSION = 300_000; // VND — mirrors default commission_rules row
 
 export default async function handler(
   req: VercelRequest,
@@ -17,22 +17,59 @@ export default async function handler(
   try {
     verifyAdminSession(req);
 
-    // All PT affiliates — fully self-contained in affiliates table
+    // All affiliate-role partners (excludes admin rows)
     const allAffiliates = await sql`
-      SELECT id, name, bank_info, referral_code,
-             balance, total_earned, pending_trials, active_subscriptions
-      FROM affiliates
-      WHERE role = 'pt'
+      SELECT id, display_name AS name, bank_info
+      FROM affiliates WHERE role = 'affiliate'
     `;
+
+    // Active codes per affiliate (one per affiliate)
+    const activeCodes = await sql`
+      SELECT affiliate_id, code FROM affiliate_codes WHERE status = 'active'
+    `;
+    const codeMap = new Map<string, string>();
+    for (const row of activeCodes as { affiliate_id: string; code: string }[]) {
+      codeMap.set(row.affiliate_id, row.code);
+    }
+
+    // Ledger-derived wallet per affiliate
+    const ledger = await sql`
+      SELECT
+        affiliate_id,
+        COALESCE(SUM(CASE WHEN entry_type = 'credit' THEN amount ELSE 0 END), 0) AS total_earned,
+        COALESCE(SUM(CASE
+          WHEN entry_type = 'credit' THEN amount
+          WHEN entry_type IN ('reversal', 'debit', 'payout_deduction') THEN -amount
+          ELSE 0
+        END), 0) AS balance
+      FROM affiliate_ledger_entries GROUP BY affiliate_id
+    `;
+    const ledgerMap = new Map<string, { total_earned: number; balance: number }>();
+    for (const row of ledger as { affiliate_id: string; total_earned: number; balance: number }[]) {
+      ledgerMap.set(row.affiliate_id, {
+        total_earned: Number(row.total_earned),
+        balance: Number(row.balance),
+      });
+    }
+
+    // Conversion counts per affiliate
+    const conversions = await sql`
+      SELECT affiliate_id, status, COUNT(*)::int AS count
+      FROM affiliate_conversions GROUP BY affiliate_id, status
+    `;
+    const convMap = new Map<string, { pending: number; active: number }>();
+    for (const row of conversions as { affiliate_id: string; status: string; count: string | number }[]) {
+      const entry = convMap.get(row.affiliate_id) ?? { pending: 0, active: 0 };
+      if (row.status === "trial") entry.pending = Number(row.count);
+      else if (row.status === "converted") entry.active = Number(row.count);
+      convMap.set(row.affiliate_id, entry);
+    }
 
     // Last paid date per affiliate
     const lastPaid = await sql`
-      SELECT affiliate_id, MAX(completed_at) as last_paid_date
-      FROM affiliate_payouts
-      WHERE status = 'paid'
-      GROUP BY affiliate_id
+      SELECT affiliate_id, MAX(completed_at) AS last_paid_date
+      FROM affiliate_payouts WHERE status = 'paid' GROUP BY affiliate_id
     `;
-
     const lastPaidMap = new Map<string, string>();
     for (const row of lastPaid as { affiliate_id: string; last_paid_date: Date | null }[]) {
       if (row.last_paid_date) {
@@ -43,19 +80,21 @@ export default async function handler(
 
     const rows: AdminAffiliateRow[] = (allAffiliates as {
       id: string; name: string; bank_info: unknown;
-      referral_code: string | null; balance: number; total_earned: number;
-      pending_trials: number; active_subscriptions: number;
-    }[]).map((a) => ({
-      affiliateId: a.id,
-      name: a.name,
-      code: a.referral_code ?? "",
-      pendingTrials: a.pending_trials,
-      activeSubscriptions: a.active_subscriptions,
-      totalEarned: Number(a.total_earned),
-      balance: Number(a.balance),
-      hasBankInfo: !!a.bank_info,
-      lastPaidDate: lastPaidMap.get(a.id) ?? null,
-    }));
+    }[]).map((a) => {
+      const wallet = ledgerMap.get(a.id) ?? { total_earned: 0, balance: 0 };
+      const conv = convMap.get(a.id) ?? { pending: 0, active: 0 };
+      return {
+        affiliateId: a.id,
+        name: a.name,
+        code: codeMap.get(a.id) ?? "",
+        pendingTrials: conv.pending,
+        activeSubscriptions: conv.active,
+        totalEarned: wallet.total_earned,
+        balance: wallet.balance,
+        hasBankInfo: !!a.bank_info,
+        lastPaidDate: lastPaidMap.get(a.id) ?? null,
+      };
+    });
 
     const overview: AdminOverview = {
       totalRevenue: rows.reduce((s, r) => s + r.totalEarned, 0),
@@ -71,7 +110,7 @@ export default async function handler(
       res.status(err.status).json({ error: err.message });
       return;
     }
-    console.error("/api/admin/overview error:", err);
+    console.error("/api/admin/overview error:", err instanceof Error ? err.message : err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

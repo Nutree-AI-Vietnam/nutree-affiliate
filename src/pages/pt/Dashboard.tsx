@@ -5,9 +5,9 @@ import { StatCard } from "../../components/StatCard";
 import { DataTable } from "../../components/DataTable";
 import { QrCode } from "../../components/QrCode";
 import { currency, dateOrDash } from "../../lib/format";
+import { getNeonAuthToken } from "../../lib/neon-auth";
 import type { MyStats, ReferralInfo, Payout } from "../../types";
 import { ptLinks } from "./nav";
-import { auth } from "../../lib/firebase";
 
 export function Dashboard() {
   const api = useApi();
@@ -45,7 +45,7 @@ export function Dashboard() {
     setSaving(true);
     setCodeError(null);
     try {
-      const token = await auth.currentUser?.getIdToken();
+      const token = await getNeonAuthToken();
       const res = await fetch("/api/affiliate/referral-code", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

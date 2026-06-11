@@ -1,4 +1,5 @@
-export type Role = "pt" | "admin";
+/** 'kol' and 'pt' are partner roles; 'admin' is the portal admin */
+export type Role = "kol" | "pt" | "admin";
 
 export interface Session {
   affiliateId: string;

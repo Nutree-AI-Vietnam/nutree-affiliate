@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../lib/firebase";
 import { loadSession, saveSession } from "../../auth/session";
+import { getNeonAuthToken } from "../../lib/neon-auth";
 
 export function Onboarding() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export function Onboarding() {
 
     setSaving(true);
     try {
-      const token = await auth.currentUser?.getIdToken();
+      const token = await getNeonAuthToken();
       const bankInfo = bankName.trim()
         ? { bankName: bankName.trim(), accountHolder: accountHolder.trim(), accountNumber: accountNumber.trim() }
         : undefined;

@@ -1,26 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockVerifyIdToken = vi.fn();
+const { mockJwtVerify, mockCreateRemoteJWKSet } = vi.hoisted(() => ({
+  mockJwtVerify: vi.fn(),
+  mockCreateRemoteJWKSet: vi.fn(() => ({})),
+}));
 
-vi.mock("firebase-admin", () => ({
-  default: {
-    apps: [] as unknown[],
-    initializeApp: vi.fn(),
-    credential: { cert: vi.fn((sa) => sa) },
-    auth: vi.fn(() => ({
-      verifyIdToken: mockVerifyIdToken,
-    })),
-  },
+vi.mock("jose", () => ({
+  createRemoteJWKSet: mockCreateRemoteJWKSet,
+  jwtVerify: mockJwtVerify,
 }));
 
 describe("verifyAuth", () => {
   beforeEach(() => {
-    process.env.FIREBASE_SERVICE_ACCOUNT = JSON.stringify({
-      type: "service_account",
-      project_id: "test",
-    });
+    process.env.NEON_AUTH_BASE_URL = "https://example.neonauth.test/neondb/auth";
     vi.resetModules();
-    mockVerifyIdToken.mockReset();
+    mockJwtVerify.mockReset();
+    mockCreateRemoteJWKSet.mockClear();
+    mockCreateRemoteJWKSet.mockReturnValue({});
   });
 
   it("throws 401 when Authorization header is missing", async () => {
@@ -30,25 +26,33 @@ describe("verifyAuth", () => {
   });
 
   it("throws 401 when token is invalid", async () => {
-    mockVerifyIdToken.mockRejectedValue(new Error("invalid token"));
+    mockJwtVerify.mockRejectedValue(new Error("invalid token"));
     const { verifyAuth } = await import("../auth");
     const req = { headers: { authorization: "Bearer bad-token" } } as never;
     await expect(verifyAuth(req)).rejects.toMatchObject({ status: 401 });
   });
 
   it("returns uid, name, email on valid token", async () => {
-    mockVerifyIdToken.mockResolvedValue({
-      uid: "firebase-uid-123",
-      name: "Alex",
-      email: "alex@test.com",
+    mockJwtVerify.mockResolvedValue({
+      payload: {
+        sub: "neon-user-123",
+        name: "Alex",
+        email: "alex@test.com",
+      },
     });
     const { verifyAuth } = await import("../auth");
     const req = {
       headers: { authorization: "Bearer valid-token" },
     } as never;
     const result = await verifyAuth(req);
+
+    expect(mockJwtVerify).toHaveBeenCalledWith(
+      "valid-token",
+      expect.anything(),
+      { issuer: "https://example.neonauth.test" },
+    );
     expect(result).toEqual({
-      uid: "firebase-uid-123",
+      uid: "neon-user-123",
       name: "Alex",
       email: "alex@test.com",
     });

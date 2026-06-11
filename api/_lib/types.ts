@@ -4,6 +4,7 @@ export interface AffiliateProfile {
   affiliateId: string;
   name: string;
   email: string;
+  /** partner_type ('kol'|'pt') for affiliates, 'admin' for admin accounts */
   role: string;
   referralCode: string;
   referralLink: string;
@@ -16,6 +17,7 @@ export interface AffiliateStats {
   totalWithdrawn: number;
   pendingTrials: number;
   activeSubscriptions: number;
+  lastPaidDate: string | null;
 }
 
 export interface PayoutRequest {
