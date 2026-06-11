@@ -24,7 +24,7 @@ export default async function handler(
     }
     const affiliateId = (affiliates[0] as { id: string }).id;
 
-    // Monthly credit/reversal breakdown from ledger
+    // Query 1: monthly credit/reversal breakdown from ledger
     const ledgerRows = await sql`
       SELECT
         TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month,
@@ -36,7 +36,33 @@ export default async function handler(
       ORDER BY DATE_TRUNC('month', created_at) DESC
     `;
 
-    // Payout requests for this affiliate — index by period
+    // Query 2: MAX(locked_until) per ledger month, joined via event_id
+    // reference_id in ledger = event_id in conversions — avoids month-string matching
+    // across timestamps (webhook may arrive after month boundary).
+    const lockedRows = await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', le.created_at), 'YYYY-MM') AS month,
+        MAX(ac.locked_until) AS latest_locked_until
+      FROM affiliate_ledger_entries le
+      JOIN affiliate_conversions ac ON ac.event_id = le.reference_id
+      WHERE le.affiliate_id = ${affiliateId}
+        AND le.entry_type = 'credit'
+        AND ac.locked_until IS NOT NULL
+      GROUP BY DATE_TRUNC('month', le.created_at)
+    `;
+    const lockedByMonth = new Map<string, string>();
+    for (const r of lockedRows as { month: string; latest_locked_until: Date | string | null }[]) {
+      if (r.latest_locked_until) {
+        lockedByMonth.set(
+          r.month,
+          r.latest_locked_until instanceof Date
+            ? r.latest_locked_until.toISOString()
+            : String(r.latest_locked_until)
+        );
+      }
+    }
+
+    // Query 3: payout requests for this affiliate — index by period
     const payoutRows = await sql`
       SELECT id, period, status
       FROM affiliate_payouts
@@ -48,7 +74,6 @@ export default async function handler(
       payoutByMonth.set(r.period, { id: r.id, status: r.status });
     }
 
-    // Current UTC calendar month — cannot be requested
     const now = new Date();
     const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 
@@ -59,6 +84,8 @@ export default async function handler(
       const reversals = Number(r.reversals);
       const net = credits - reversals;
       const payout = payoutByMonth.get(r.month);
+      const latestLockedUntil = lockedByMonth.get(r.month) ?? null;
+      const isLocked = latestLockedUntil !== null && new Date(latestLockedUntil) > now;
 
       let payoutStatus: MonthlyEarning["payoutStatus"];
       if (r.month >= currentMonth) {
@@ -67,6 +94,8 @@ export default async function handler(
         payoutStatus = "paid";
       } else if (payout?.status === "pending") {
         payoutStatus = "pending";
+      } else if (isLocked) {
+        payoutStatus = "locked";
       } else if (net > 0) {
         payoutStatus = "unrequested";
       } else {
@@ -80,7 +109,7 @@ export default async function handler(
         net,
         payoutStatus,
         payoutRequestId: payout?.id ?? null,
-        lockedUntil: null,
+        lockedUntil: isLocked ? latestLockedUntil : null,
       };
     });
 

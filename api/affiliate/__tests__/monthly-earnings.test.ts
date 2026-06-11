@@ -48,6 +48,7 @@ describe("GET /api/affiliate/monthly-earnings", () => {
         { month: "2026-04", credits: "300000", reversals: "0" },
         { month: "2026-05", credits: "600000", reversals: "300000" },
       ])
+      .mockResolvedValueOnce([])                  // locked_until lookup — no locks
       .mockResolvedValueOnce([                    // payout requests
         { id: "req-1", period: "2026-04", status: "paid" },
       ]);
@@ -72,5 +73,48 @@ describe("GET /api/affiliate/monthly-earnings", () => {
     expect(may.net).toBe(300000); // 600000 - 300000
     // May is a past month with net > 0 and no payout request → unrequested
     expect(may.payoutStatus).toBe("unrequested");
+  });
+
+  it("returns locked status when a conversion for the month is still within holding period", async () => {
+    const futureDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    mockSql
+      .mockResolvedValueOnce([{ id: "aff-1" }])
+      .mockResolvedValueOnce([
+        { month: "2026-05", credits: "300000", reversals: "0" },
+      ])
+      .mockResolvedValueOnce([
+        { month: "2026-05", latest_locked_until: futureDate },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const req = { headers: { authorization: "Bearer tok" }, method: "GET" };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res["statusCode"]).toBe(200);
+    const body = res["body"] as { month: string; payoutStatus: string; lockedUntil: string | null }[];
+    const may = body.find((m) => m.month === "2026-05")!;
+    expect(may.payoutStatus).toBe("locked");
+    expect(may.lockedUntil).toBe(futureDate);
+  });
+
+  it("returns unrequested when all conversions for the month have passed holding period", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ id: "aff-1" }])
+      .mockResolvedValueOnce([
+        { month: "2026-04", credits: "300000", reversals: "0" },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    const req = { headers: { authorization: "Bearer tok" }, method: "GET" };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res["statusCode"]).toBe(200);
+    const body = res["body"] as { month: string; payoutStatus: string; lockedUntil: string | null }[];
+    const apr = body.find((m) => m.month === "2026-04")!;
+    expect(apr.payoutStatus).toBe("unrequested");
+    expect(apr.lockedUntil).toBeNull();
   });
 });
