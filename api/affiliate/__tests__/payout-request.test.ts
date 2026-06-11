@@ -61,8 +61,10 @@ describe("POST /api/affiliate/payout-request", () => {
   it("returns 409 if payout request already exists for that month", async () => {
     mockSql
       .mockResolvedValueOnce([{ id: "aff-1" }])
-      .mockResolvedValueOnce([{ net: "300000" }])  // net calculation
-      .mockRejectedValueOnce(Object.assign(new Error("unique"), { code: "23505" }));  // unique violation
+      .mockResolvedValueOnce([{ latest_locked: null }])
+      .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
+      .mockResolvedValueOnce([{ overall_balance: "300000" }])
+      .mockRejectedValueOnce(Object.assign(new Error("unique"), { code: "23505" }));
     const req = {
       headers: { authorization: "Bearer tok" }, method: "POST",
       body: { month: "2026-05" },
@@ -75,7 +77,9 @@ describe("POST /api/affiliate/payout-request", () => {
   it("creates payout request and returns it", async () => {
     mockSql
       .mockResolvedValueOnce([{ id: "aff-1" }])
-      .mockResolvedValueOnce([{ net: "300000" }])  // net calculation
+      .mockResolvedValueOnce([{ latest_locked: null }])
+      .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
+      .mockResolvedValueOnce([{ overall_balance: "300000" }])
       .mockResolvedValueOnce([{
         id: "req-new", amount: 300000, status: "pending", period: "2026-05",
         requested_at: new Date("2026-06-01T00:00:00Z"),
@@ -91,5 +95,66 @@ describe("POST /api/affiliate/payout-request", () => {
     expect(body.id).toBe("req-new");
     expect(body.status).toBe("pending");
     expect(body.period).toBe("2026-05");
+  });
+
+  it("returns 422 when the month still has locked conversions", async () => {
+    const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+    mockSql
+      .mockResolvedValueOnce([{ id: "aff-1" }])
+      .mockResolvedValueOnce([{ latest_locked: futureDate }]);
+
+    const req = {
+      headers: { authorization: "Bearer tok" }, method: "POST",
+      body: { month: "2026-05" },
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res["statusCode"]).toBe(422);
+    const body = res["body"] as { error: string; lockedUntil: string };
+    expect(body.error).toContain("giữ tiền");
+    expect(body.lockedUntil).toBe(futureDate);
+  });
+
+  it("returns 422 when overall balance is negative (carry-over debt exceeds monthly earnings)", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ id: "aff-1" }])
+      .mockResolvedValueOnce([{ latest_locked: null }])
+      .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
+      .mockResolvedValueOnce([{ overall_balance: "-100000" }]);
+
+    const req = {
+      headers: { authorization: "Bearer tok" }, method: "POST",
+      body: { month: "2026-05" },
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res["statusCode"]).toBe(422);
+    const body = res["body"] as { error: string };
+    expect(body.error).toContain("hoàn tiền");
+  });
+
+  it("creates payout request with carry-over-reduced amount when balance < monthly net", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ id: "aff-1" }])
+      .mockResolvedValueOnce([{ latest_locked: null }])
+      .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
+      .mockResolvedValueOnce([{ overall_balance: "200000" }])
+      .mockResolvedValueOnce([{
+        id: "req-new", amount: 200000, status: "pending", period: "2026-05",
+        requested_at: new Date("2026-06-01T00:00:00Z"),
+      }]);
+
+    const req = {
+      headers: { authorization: "Bearer tok" }, method: "POST",
+      body: { month: "2026-05" },
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res["statusCode"]).toBe(201);
+    const body = res["body"] as { amount: number };
+    expect(body.amount).toBe(200000);
   });
 });
