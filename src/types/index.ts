@@ -92,6 +92,7 @@ export interface AdminPayoutRequest {
   requestedAt: string;
   completedAt: string | null;
   adminNote: string | null;
+  bankInfo: BankInfo | null;
 }
 
 export interface AdminAffiliateDetail {

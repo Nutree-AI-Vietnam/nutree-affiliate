@@ -135,12 +135,6 @@ export function Overview() {
                     { key: "activeSubscriptions", header: "Đăng ký", sortable: true },
                     { key: "totalRevenue", header: "Doanh thu", sortable: true, render: (r) => currency(r.totalRevenue) },
                     { key: "payoutOwed", header: "Cần trả", sortable: true, render: (r) => currency(r.payoutOwed) },
-                    {
-                      key: "hasBankInfo", header: "Thông tin NH",
-                      render: (r) => r.hasBankInfo
-                        ? <span className="rounded-full bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-2.5 py-0.5 text-xs font-semibold text-[#1A4739] dark:text-[#29B6A1]">OK</span>
-                        : <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">Thiếu</span>
-                    },
                     { key: "lastPaidDate", header: "Lần trả cuối", render: (r) => dateOrDash(r.lastPaidDate) },
                   ]}
                 />

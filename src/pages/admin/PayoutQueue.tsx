@@ -85,6 +85,12 @@ export function PayoutQueue() {
               { key: "affiliateName", header: "Affiliate" },
               { key: "period", header: "Tháng" },
               { key: "amount", header: "Số tiền", render: (r) => currency(r.amount) },
+              {
+                key: "bankInfo", header: "Tài khoản",
+                render: (r) => r.bankInfo
+                  ? <span className="text-xs text-gray-700 dark:text-[#B0B0B0]">{r.bankInfo.bankName} · {r.bankInfo.accountNumber}</span>
+                  : <span className="text-xs text-amber-600 dark:text-amber-400">Chưa cập nhật</span>
+              },
               { key: "requestedAt", header: "Yêu cầu lúc", render: (r) => r.requestedAt.slice(0, 10) },
               {
                 key: "action", header: "",
@@ -126,11 +132,38 @@ export function PayoutQueue() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#2D2D2D] p-6 shadow-xl ring-1 ring-black/10 dark:ring-white/10">
               <div className="mb-1 text-base font-bold text-gray-900 dark:text-white">Duyệt thanh toán</div>
-              <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="mb-3 text-sm text-gray-500 dark:text-gray-400">
                 <span className="font-semibold text-gray-800 dark:text-white">{approvingRequest.affiliateName}</span>
                 {" · "}Tháng <span className="font-semibold text-gray-800 dark:text-white">{approvingRequest.period}</span>
                 {" · "}<span className="font-semibold text-gray-800 dark:text-white">{currency(approvingRequest.amount)}</span>
               </div>
+              {approvingRequest.bankInfo ? (
+                <div className="mb-4 rounded-xl bg-[#F5F5F5] dark:bg-[#1F1F1F] px-4 py-3 text-xs space-y-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">Thông tin chuyển khoản</div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Ngân hàng</span>
+                    <span className="font-semibold text-gray-800 dark:text-white">{approvingRequest.bankInfo.bankName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Số tài khoản</span>
+                    <span className="font-semibold text-gray-800 dark:text-white font-mono">{approvingRequest.bankInfo.accountNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Chủ tài khoản</span>
+                    <span className="font-semibold text-gray-800 dark:text-white">{approvingRequest.bankInfo.accountHolder}</span>
+                  </div>
+                  {approvingRequest.bankInfo.routingOrSwift && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Routing / SWIFT</span>
+                      <span className="font-semibold text-gray-800 dark:text-white font-mono">{approvingRequest.bankInfo.routingOrSwift}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
+                  Affiliate chưa cập nhật thông tin ngân hàng
+                </div>
+              )}
               <textarea
                 value={approveNote}
                 onChange={(e) => setApproveNote(e.target.value)}

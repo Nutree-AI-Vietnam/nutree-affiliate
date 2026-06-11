@@ -17,7 +17,8 @@ export default async function handler(
     const rows = await sql`
       SELECT
         p.id, p.affiliate_id, a.display_name AS affiliate_name,
-        p.period, p.amount, p.status, p.requested_at, p.completed_at, p.admin_note
+        p.period, p.amount, p.status, p.requested_at, p.completed_at, p.admin_note,
+        a.bank_info
       FROM affiliate_payouts p
       JOIN affiliates a ON a.id = p.affiliate_id
       WHERE p.period IS NOT NULL
@@ -30,6 +31,7 @@ export default async function handler(
       id: string; affiliate_id: string; affiliate_name: string; period: string;
       amount: number; status: string; requested_at: Date | string;
       completed_at: Date | string | null; admin_note: string | null;
+      bank_info: unknown;
     }[]).map((r) => ({
       id: r.id,
       affiliateId: r.affiliate_id,
@@ -42,6 +44,7 @@ export default async function handler(
         ? (r.completed_at instanceof Date ? r.completed_at.toISOString() : String(r.completed_at))
         : null,
       adminNote: r.admin_note,
+      bankInfo: (r.bank_info as import("../../_lib/types").BankInfo | null) ?? null,
     }));
 
     res.status(200).json(requests);

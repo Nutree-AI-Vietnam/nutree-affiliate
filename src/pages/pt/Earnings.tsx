@@ -5,28 +5,29 @@ import { useApi } from "../../api";
 import { NavBar } from "../../components/NavBar";
 import { DataTable } from "../../components/DataTable";
 import { currency } from "../../lib/format";
-import type { MonthlyEarning } from "../../types";
+import type { MonthlyEarning, MyStats } from "../../types";
 import { ptLinks } from "./nav";
 
 export function Earnings() {
   const api = useApi();
   const navigate = useNavigate();
   const [earnings, setEarnings] = useState<MonthlyEarning[]>([]);
+  const [stats, setStats] = useState<MyStats | null>(null);
   const [error, setError] = useState("");
   const [requestingMonth, setRequestingMonth] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestLoading, setRequestLoading] = useState(false);
 
   useEffect(() => {
-    api.getMyMonthlyEarnings()
-      .then(setEarnings)
+    Promise.all([api.getMyMonthlyEarnings(), api.getMyStats()])
+      .then(([e, s]) => { setEarnings(e); setStats(s); })
       .catch((e) => setError(e instanceof Error ? e.message : "Không thể tải dữ liệu"));
   }, [api]);
 
   const totalEarned = earnings.reduce((s, m) => s + Math.max(0, m.net), 0);
-  const totalPaid = earnings
-    .filter((m) => m.payoutStatus === "paid")
-    .reduce((s, m) => s + Math.max(0, m.net), 0);
+  // Use ledger-derived totalPayout from stats so it matches Dashboard
+  // (includes any payouts without a period, e.g. from legacy mark-paid flow)
+  const totalPaid = stats?.totalPayout ?? 0;
   const availableToRequest = earnings
     .filter((m) => m.payoutStatus === "unrequested")
     .reduce((s, m) => s + Math.max(0, m.net), 0);
