@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ApiContext } from "../../../api";
 import { createMockApi } from "../../../api/mockApi";
+import { AuthProvider } from "../../../auth/AuthProvider";
 import { saveSession } from "../../../auth/session";
 import { ThemeProvider } from "../../../lib/ThemeContext";
 import { Dashboard } from "../Dashboard";
@@ -18,11 +19,15 @@ describe("PT Dashboard", () => {
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>
-          <MemoryRouter><Dashboard /></MemoryRouter>
+          <MemoryRouter>
+            <AuthProvider>
+              <Dashboard />
+            </AuthProvider>
+          </MemoryRouter>
         </ThemeProvider>
       </ApiContext.Provider>
     );
-    await waitFor(() => expect(screen.getByText("$4,820")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/4\.820\s*₫/)).toBeInTheDocument());
     expect(screen.getByText("Tổng doanh thu")).toBeInTheDocument();
     expect(screen.getByText("64")).toBeInTheDocument(); // active subs
   });

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { ApiContext } from "../../../api";
 import { createMockApi } from "../../../api/mockApi";
+import { AuthProvider } from "../../../auth/AuthProvider";
 import { saveSession } from "../../../auth/session";
 import { ThemeProvider } from "../../../lib/ThemeContext";
 import { Overview } from "../Overview";
@@ -17,11 +18,15 @@ describe("Admin Overview", () => {
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>
-          <MemoryRouter><Overview /></MemoryRouter>
+          <MemoryRouter>
+            <AuthProvider>
+              <Overview />
+            </AuthProvider>
+          </MemoryRouter>
         </ThemeProvider>
       </ApiContext.Provider>
     );
-    await waitFor(() => expect(screen.getByText("$11,030")).toBeInTheDocument()); // 4820+2310+3900
+    await waitFor(() => expect(screen.getByText(/11\.030\s*₫/)).toBeInTheDocument()); // 4820+2310+3900
     expect(screen.getByText("Alex R.")).toBeInTheDocument();
     expect(screen.getByText("Sam T.")).toBeInTheDocument();
   });
@@ -32,7 +37,11 @@ describe("Admin Overview", () => {
     render(
       <ApiContext.Provider value={api}>
         <ThemeProvider>
-          <MemoryRouter><Overview /></MemoryRouter>
+          <MemoryRouter>
+            <AuthProvider>
+              <Overview />
+            </AuthProvider>
+          </MemoryRouter>
         </ThemeProvider>
       </ApiContext.Provider>
     );
