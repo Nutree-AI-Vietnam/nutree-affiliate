@@ -56,6 +56,22 @@ export function PayoutQueue() {
           <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
 
+        {/* Summary banner */}
+        {pending.length > 0 && (
+          <div
+            className="mb-6 rounded-2xl p-4 text-white shadow-md flex items-center justify-between"
+            style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
+          >
+            <div className="text-sm font-semibold">
+              {pending.length} yêu cầu đang chờ xử lý
+            </div>
+            <div className="text-right">
+              <div className="text-[11px] text-white/60 uppercase tracking-widest">Tổng cần trả</div>
+              <div className="text-xl font-extrabold">{currency(pending.reduce((s, r) => s + r.amount, 0))}</div>
+            </div>
+          </div>
+        )}
+
         {/* Pending section */}
         <div className="mb-6 rounded-2xl bg-white dark:bg-[#2D2D2D] p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
           <div className="mb-4 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#29B6A1" }}>

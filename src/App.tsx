@@ -7,6 +7,7 @@ import { BankInfo } from "./pages/pt/BankInfo";
 import { Guide } from "./pages/pt/Guide";
 import { Onboarding } from "./pages/pt/Onboarding";
 import { Conversions } from "./pages/pt/Conversions";
+import { Earnings } from "./pages/pt/Earnings";
 import { Overview } from "./pages/admin/Overview";
 import { AffiliateDetail } from "./pages/admin/AffiliateDetail";
 import { PayoutQueue } from "./pages/admin/PayoutQueue";
@@ -18,6 +19,7 @@ export function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<RequireRole role="pt" />}>
         <Route path="/pt" element={<Dashboard />} />
+        <Route path="/pt/earnings" element={<Earnings />} />
         <Route path="/pt/conversions" element={<Conversions />} />
         <Route path="/pt/referral" element={<Referral />} />
         <Route path="/pt/bank" element={<BankInfo />} />
