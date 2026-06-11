@@ -227,6 +227,9 @@ async function migrate() {
     END $$
   `;
 
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS occurred_at  TIMESTAMPTZ`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ`;
+
   console.log("✓ affiliate_conversions, affiliate_webhook_events");
   console.log("Migration complete");
 }
