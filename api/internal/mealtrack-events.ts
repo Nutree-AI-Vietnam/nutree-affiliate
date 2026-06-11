@@ -12,7 +12,7 @@ export const config = { api: { bodyParser: false } };
 interface EventEnvelope {
   event_id: string;
   event_type: string;
-  occurred_at: string;
+  occurred_at?: string;
   mealtrack_user_id: string;
   // affiliate_id is required for affiliate_attribution_created; for lifecycle
   // events nutree-affiliate resolves it from affiliate_conversions by user_id.
@@ -41,6 +41,9 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
         codeId = (codeRows[0] as { id: string } | undefined)?.id ?? null;
       }
       const trialOccurredAt = evt.occurred_at ?? new Date().toISOString();
+      if (!evt.occurred_at) {
+        console.warn("affiliate_attribution_created missing occurred_at, using NOW()", evt.event_id);
+      }
       // UNIQUE(user_id) enforces one-attribution-per-user; duplicate calls are no-ops.
       await sql`
         INSERT INTO affiliate_conversions

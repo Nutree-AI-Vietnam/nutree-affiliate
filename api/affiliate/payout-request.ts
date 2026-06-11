@@ -78,9 +78,13 @@ export default async function handler(
     const balanceRows = await sql`
       SELECT COALESCE(SUM(CASE
         WHEN entry_type = 'credit' THEN amount
-        WHEN entry_type IN ('reversal', 'payout_deduction') THEN -amount
+        WHEN entry_type IN ('reversal', 'debit', 'payout_deduction') THEN -amount
         ELSE 0
-      END), 0) AS overall_balance
+      END), 0)
+      - COALESCE((
+          SELECT SUM(amount) FROM affiliate_payouts
+          WHERE affiliate_id = ${affiliateId} AND status = 'pending'
+        ), 0) AS overall_balance
       FROM affiliate_ledger_entries
       WHERE affiliate_id = ${affiliateId}
     `;

@@ -59,10 +59,9 @@ export default async function handler(
     const lockedByMonth = new Map<string, string>();
     for (const r of lockedRows as { month: string; latest_locked_until: Date | string | null }[]) {
       if (r.latest_locked_until) {
+        const val = r.latest_locked_until;
         lockedByMonth.set(r.month,
-          r.latest_locked_until instanceof Date
-            ? r.latest_locked_until.toISOString()
-            : String(r.latest_locked_until)
+          val instanceof Date ? val.toISOString() : new Date(val as string).toISOString()
         );
       }
     }
