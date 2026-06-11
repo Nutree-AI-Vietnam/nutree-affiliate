@@ -19,16 +19,28 @@ export function verifyInternalRequest(req: VercelRequest, rawBody: string): void
 /**
  * Buffer the full request body from the stream.
  * Use together with: export const config = { api: { bodyParser: false } }
+ *
+ * Vercel dev may materialise req.body as a Buffer or string before the stream
+ * is readable, so we check those fast paths first to avoid Invalid JSON errors.
  */
 export async function readRawBody(req: VercelRequest): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string));
-  }
-  const rawBody = Buffer.concat(chunks).toString("utf-8");
-  if (rawBody) return rawBody;
-
+  // Fast paths: Vercel dev sometimes populates req.body before stream is readable
+  if (Buffer.isBuffer(req.body)) return (req.body as Buffer).toString("utf-8");
   if (typeof req.body === "string") return req.body;
-  if (req.body && typeof req.body === "object") return JSON.stringify(req.body);
-  return rawBody;
+
+  // Stream path: event-emitter is more reliable than for-await in Vercel dev
+  return new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer | string) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string));
+    });
+    req.on("end", () => {
+      const rawBody = Buffer.concat(chunks).toString("utf-8");
+      if (rawBody) { resolve(rawBody); return; }
+      // Last resort: re-serialise a pre-parsed object (signature will fail,
+      // but at least the handler returns 401 instead of crashing on JSON.parse)
+      resolve(req.body && typeof req.body === "object" ? JSON.stringify(req.body) : "");
+    });
+    req.on("error", reject);
+  });
 }
