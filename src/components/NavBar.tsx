@@ -1,18 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useApi } from "../api";
-import { clearSession } from "../auth/session";
+import { useAuth } from "../auth/AuthProvider";
 import { useThemeContext } from "../lib/ThemeContext";
 
 export function NavBar({ links, title }: { links: { to: string; label: string }[]; title: string }) {
-  const api = useApi();
+  const auth = useAuth();
   const navigate = useNavigate();
   const { dark, toggle } = useThemeContext();
   const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    await api.logout();
-    clearSession();
+    await auth.logout();
     navigate("/login");
   };
 
