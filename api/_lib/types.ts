@@ -63,8 +63,9 @@ export interface MonthlyEarning {
   credits: number;
   reversals: number;
   net: number;
-  payoutStatus: "accumulating" | "unrequested" | "pending" | "paid";
+  payoutStatus: "accumulating" | "locked" | "unrequested" | "pending" | "paid";
   payoutRequestId: string | null;
+  lockedUntil: string | null;  // ISO timestamp of MAX(locked_until) for month; null if cleared
 }
 
 export interface Conversion {

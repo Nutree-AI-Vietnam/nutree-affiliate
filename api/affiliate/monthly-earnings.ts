@@ -80,6 +80,7 @@ export default async function handler(
         net,
         payoutStatus,
         payoutRequestId: payout?.id ?? null,
+        lockedUntil: null,
       };
     });
 

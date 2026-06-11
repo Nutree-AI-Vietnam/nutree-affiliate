@@ -70,7 +70,7 @@ export default async function handler(
       else if (payout?.status === "pending") payoutStatus = "pending";
       else if (net > 0) payoutStatus = "unrequested";
       else payoutStatus = "accumulating";
-      return { month: r.month, credits, reversals, net, payoutStatus, payoutRequestId: payout?.id ?? null };
+      return { month: r.month, credits, reversals, net, payoutStatus, payoutRequestId: payout?.id ?? null, lockedUntil: null };
     });
 
     const convRows = await sql`
