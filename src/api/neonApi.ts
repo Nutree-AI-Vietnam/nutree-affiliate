@@ -1,8 +1,7 @@
-// src/api/neonApi.ts
-import { signInWithPopup, signOut } from "firebase/auth";
-import { auth, googleProvider } from "../lib/firebase";
-import { loadSession } from "../auth/session";
+import { notifyAuthRequired } from "../auth/auth-events";
+import { clearSession, loadSession } from "../auth/session";
 import type { AffiliateApi } from "./index";
+import { authClient, clearNeonAuthTokenCache, getNeonAuthToken } from "../lib/neon-auth";
 import type {
   Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview, AffiliateRow,
 } from "../types";
@@ -13,15 +12,13 @@ async function authFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  // Admin users have no Firebase session — use their signed adminToken instead
+  // Admin users have no Neon Auth session — use their signed adminToken instead
   const session = loadSession();
   let token: string;
   if (session?.role === "admin" && session.adminToken) {
     token = session.adminToken;
   } else {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Not authenticated");
-    token = await user.getIdToken();
+    token = await getNeonAuthToken();
   }
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -32,7 +29,12 @@ async function authFetch<T>(
     },
   });
   if (res.status === 401) {
-    if (!session?.adminToken) await signOut(auth);
+    if (!session?.adminToken) {
+      clearNeonAuthTokenCache();
+      clearSession();
+      notifyAuthRequired();
+      await authClient.signOut();
+    }
     throw new Error("Session expired");
   }
   if (!res.ok) {
@@ -58,6 +60,7 @@ interface AffiliateStats {
   totalWithdrawn: number;
   pendingTrials: number;
   activeSubscriptions: number;
+  lastPaidDate: string | null;
 }
 
 interface PayoutRequest {
@@ -92,13 +95,22 @@ interface AdminOverviewResponse {
 export function createNeonApi(): AffiliateApi {
   return {
     async login(): Promise<Session> {
-      await signInWithPopup(auth, googleProvider);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${window.location.origin}/login?auth=callback`,
+      });
+      throw new Error("Redirecting to Google sign-in");
+    },
+
+    async getCurrentSession(): Promise<Session | null> {
+      const { data } = await authClient.getSession();
+      if (!data?.session) return null;
       const profile = await authFetch<AffiliateProfile>("/affiliate/me");
       return {
         affiliateId: profile.affiliateId,
         name: profile.name,
         email: profile.email,
-        role: profile.role as "pt" | "admin",
+        role: profile.role as "kol" | "pt" | "admin",
         onboarded: profile.onboarded,
       };
     },
@@ -108,23 +120,18 @@ export function createNeonApi(): AffiliateApi {
     },
 
     async logout(): Promise<void> {
-      await signOut(auth);
+      clearNeonAuthTokenCache();
+      await authClient.signOut();
     },
 
     async getMyStats(): Promise<MyStats> {
-      const [stats, payouts] = await Promise.all([
-        authFetch<AffiliateStats>("/affiliate/stats"),
-        authFetch<PayoutRequest[]>("/affiliate/payouts"),
-      ]);
-      const lastPaid = payouts
-        .filter((p) => p.status === "paid" && p.completedAt)
-        .sort((a, b) => (b.completedAt! > a.completedAt! ? 1 : -1))[0];
+      const stats = await authFetch<AffiliateStats>("/affiliate/stats");
       return {
         totalRevenue: stats.totalEarned,
         totalPayout: stats.totalWithdrawn,
         pendingTrials: stats.pendingTrials,
         activeSubscriptions: stats.activeSubscriptions,
-        lastPaymentDate: lastPaid?.completedAt?.slice(0, 10) ?? null,
+        lastPaymentDate: stats.lastPaidDate,
       };
     },
 

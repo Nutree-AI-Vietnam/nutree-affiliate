@@ -1,30 +1,34 @@
 // src/api/__tests__/neonApi.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Mock firebase/auth module
-vi.mock("firebase/auth", () => ({
-  signInWithPopup: vi.fn(),
-  signOut: vi.fn(),
-  GoogleAuthProvider: vi.fn(),
-}));
-
-// Mock src/lib/firebase.ts
-vi.mock("../../lib/firebase", () => ({
-  auth: {
-    currentUser: null as unknown,
+vi.mock("../../lib/neon-auth", () => ({
+  authClient: {
+    getSession: vi.fn(),
+    signIn: { social: vi.fn() },
+    signOut: vi.fn(),
   },
-  googleProvider: {},
+  clearNeonAuthTokenCache: vi.fn(),
+  getNeonAuthToken: vi.fn(),
 }));
 
-import { signInWithPopup, signOut } from "firebase/auth";
-import * as firebaseLib from "../../lib/firebase";
+import { authClient, clearNeonAuthTokenCache, getNeonAuthToken } from "../../lib/neon-auth";
+import { AUTH_REQUIRED_EVENT } from "../../auth/auth-events";
+import { loadSession, saveSession } from "../../auth/session";
 import { createNeonApi } from "../neonApi";
 
-const mockSignIn = signInWithPopup as ReturnType<typeof vi.fn>;
-const mockSignOut = signOut as ReturnType<typeof vi.fn>;
+const mockAuthClient = authClient as unknown as {
+  getSession: ReturnType<typeof vi.fn>;
+  signIn: { social: ReturnType<typeof vi.fn> };
+  signOut: ReturnType<typeof vi.fn>;
+};
+const mockGetNeonAuthToken = getNeonAuthToken as ReturnType<typeof vi.fn>;
+const mockClearNeonAuthTokenCache = clearNeonAuthTokenCache as ReturnType<typeof vi.fn>;
 
-function setCurrentUser(user: { uid: string; displayName: string; email: string; getIdToken: () => Promise<string> } | null) {
-  (firebaseLib.auth as unknown as Record<string, unknown>).currentUser = user;
+function mockSignedInSession() {
+  mockAuthClient.getSession.mockResolvedValue({
+    data: { session: { user: { id: "neon-user-1" } } },
+    error: null,
+  });
 }
 
 function mockFetch(response: unknown, status = 200) {
@@ -38,7 +42,8 @@ function mockFetch(response: unknown, status = 200) {
 describe("neonApi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setCurrentUser(null);
+    mockAuthClient.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    mockGetNeonAuthToken.mockResolvedValue("test-token");
   });
 
   afterEach(() => {
@@ -46,15 +51,23 @@ describe("neonApi", () => {
   });
 
   describe("login()", () => {
-    it("signs in with Google and returns Session from /api/affiliate/me", async () => {
-      const mockUser = {
-        uid: "firebase-uid-1",
-        displayName: "Alex",
-        email: "alex@test.com",
-        getIdToken: vi.fn().mockResolvedValue("test-token"),
-      };
-      mockSignIn.mockResolvedValue({ user: mockUser });
-      setCurrentUser(mockUser);
+    it("starts Google redirect immediately", async () => {
+      mockAuthClient.signIn.social.mockResolvedValue(undefined);
+
+      const api = createNeonApi();
+
+      await expect(api.login()).rejects.toThrow("Redirecting to Google sign-in");
+      expect(mockAuthClient.signIn.social).toHaveBeenCalledWith({
+        provider: "google",
+        callbackURL: `${window.location.origin}/login?auth=callback`,
+      });
+      expect(mockAuthClient.getSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getCurrentSession()", () => {
+    it("returns Session from /api/affiliate/me when Neon Auth has a session", async () => {
+      mockSignedInSession();
       mockFetch({
         affiliateId: "aff-1",
         name: "Alex",
@@ -65,7 +78,7 @@ describe("neonApi", () => {
       });
 
       const api = createNeonApi();
-      const session = await api.login();
+      const session = await api.getCurrentSession();
 
       expect(session).toEqual({
         affiliateId: "aff-1",
@@ -73,69 +86,48 @@ describe("neonApi", () => {
         email: "alex@test.com",
         role: "pt", onboarded: true,
       });
+      expect(mockGetNeonAuthToken).toHaveBeenCalledOnce();
     });
   });
 
   describe("logout()", () => {
     it("calls signOut", async () => {
-      mockSignOut.mockResolvedValue(undefined);
+      mockAuthClient.signOut.mockResolvedValue(undefined);
       const api = createNeonApi();
       await api.logout();
-      expect(mockSignOut).toHaveBeenCalledOnce();
+      expect(mockAuthClient.signOut).toHaveBeenCalledOnce();
     });
   });
 
   describe("authFetch on 401", () => {
-    it("calls logout and throws on 401 response", async () => {
-      const mockUser = {
-        uid: "firebase-uid-1",
-        displayName: "Alex",
-        email: "alex@test.com",
-        getIdToken: vi.fn().mockResolvedValue("expired-token"),
-      };
-      setCurrentUser(mockUser);
-      mockSignOut.mockResolvedValue(undefined);
+    it("clears auth, broadcasts auth-required, and throws on 401 response", async () => {
+      mockGetNeonAuthToken.mockResolvedValue("expired-token");
+      mockAuthClient.signOut.mockResolvedValue(undefined);
+      saveSession({ affiliateId: "aff-1", name: "Alex", email: "alex@test.com", role: "pt", onboarded: true });
+      const authRequiredListener = vi.fn();
+      window.addEventListener(AUTH_REQUIRED_EVENT, authRequiredListener);
       mockFetch({ error: "Unauthorized" }, 401);
 
       const api = createNeonApi();
       await expect(api.getMyReferral()).rejects.toThrow("Session expired");
-      expect(mockSignOut).toHaveBeenCalledOnce();
+      expect(mockClearNeonAuthTokenCache).toHaveBeenCalledOnce();
+      expect(loadSession()).toBeNull();
+      expect(authRequiredListener).toHaveBeenCalledOnce();
+      expect(mockAuthClient.signOut).toHaveBeenCalledOnce();
+      window.removeEventListener(AUTH_REQUIRED_EVENT, authRequiredListener);
     });
   });
 
   describe("getMyStats()", () => {
-    it("maps AffiliateStats + payouts to MyStats", async () => {
-      const mockUser = {
-        uid: "u1",
-        displayName: "Alex",
-        email: "alex@test.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
-
-      vi.stubGlobal("fetch", vi.fn()
-        .mockResolvedValueOnce({
-          ok: true, status: 200,
-          json: () => Promise.resolve({
-            balance: 600000,
-            totalEarned: 900000,
-            totalWithdrawn: 300000,
-            pendingTrials: 2,
-            activeSubscriptions: 3,
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true, status: 200,
-          json: () => Promise.resolve([
-            {
-              id: "p1", amount: 300000, status: "paid",
-              completedAt: "2026-05-03T00:00:00Z",
-              requestedAt: "2026-05-01T00:00:00Z",
-              paymentMethod: null, paymentDetails: null, adminNote: null,
-            },
-          ]),
-        })
-      );
+    it("maps AffiliateStats to MyStats", async () => {
+      mockFetch({
+        balance: 600000,
+        totalEarned: 900000,
+        totalWithdrawn: 300000,
+        pendingTrials: 2,
+        activeSubscriptions: 3,
+        lastPaidDate: "2026-05-03",
+      });
 
       const api = createNeonApi();
       const stats = await api.getMyStats();
@@ -145,46 +137,12 @@ describe("neonApi", () => {
       expect(stats.pendingTrials).toBe(2);
       expect(stats.activeSubscriptions).toBe(3);
       expect(stats.lastPaymentDate).toBe("2026-05-03");
-    });
-
-    it("returns null lastPaymentDate when no paid payouts", async () => {
-      const mockUser = {
-        uid: "u1",
-        displayName: "Alex",
-        email: "alex@test.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
-
-      vi.stubGlobal("fetch", vi.fn()
-        .mockResolvedValueOnce({
-          ok: true, status: 200,
-          json: () => Promise.resolve({
-            balance: 0, totalEarned: 0, totalWithdrawn: 0,
-            pendingTrials: 0, activeSubscriptions: 0,
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true, status: 200,
-          json: () => Promise.resolve([]),
-        })
-      );
-
-      const api = createNeonApi();
-      const stats = await api.getMyStats();
-      expect(stats.lastPaymentDate).toBeNull();
+      expect(fetch).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("getMyReferral()", () => {
     it("returns code and link from /api/affiliate/me", async () => {
-      const mockUser = {
-        uid: "u1",
-        displayName: "Alex",
-        email: "alex@test.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch({
         affiliateId: "aff-1", name: "Alex", email: "alex@test.com",
         role: "pt", referralCode: "ABCD1234",
@@ -200,22 +158,12 @@ describe("neonApi", () => {
 
   describe("getMyBankInfo()", () => {
     it("returns null when bank info is not set", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Alex", email: "a@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch(null);
       const api = createNeonApi();
       expect(await api.getMyBankInfo()).toBeNull();
     });
 
     it("returns bank info when set", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Alex", email: "a@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       const bankInfo = { bankName: "VCB", accountHolder: "ALEX", accountNumber: "123" };
       mockFetch(bankInfo);
       const api = createNeonApi();
@@ -225,11 +173,6 @@ describe("neonApi", () => {
 
   describe("saveBankInfo()", () => {
     it("POSTs bank info and returns saved value", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Alex", email: "a@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       const bankInfo = { bankName: "VCB", accountHolder: "ALEX", accountNumber: "123" };
       mockFetch(bankInfo);
       const api = createNeonApi();
@@ -243,11 +186,6 @@ describe("neonApi", () => {
 
   describe("getMyPayouts()", () => {
     it("maps PayoutRequests to Payout[] with period formatted", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Alex", email: "a@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch([{
         id: "p1", amount: 300000, status: "paid",
         requestedAt: "2026-05-01T00:00:00Z",
@@ -267,11 +205,6 @@ describe("neonApi", () => {
 
   describe("getAdminOverview()", () => {
     it("maps AdminOverviewResponse to AdminOverview with derived totals", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Admin", email: "admin@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch({
         totalRevenue: 1200000,
         totalPayoutOwed: 900000,
@@ -300,21 +233,16 @@ describe("neonApi", () => {
       expect(overview.totalPayoutOwed).toBe(900000);
       expect(overview.activeAffiliates).toBe(2);
       expect(overview.commissionPerConversion).toBe(300000);
-      expect(overview.pendingTrials).toBe(1);           // sum: 1 + 0
-      expect(overview.activeSubscriptions).toBe(4);     // sum: 3 + 1
-      expect(overview.affiliates[0].totalRevenue).toBe(900000);  // totalEarned → totalRevenue
-      expect(overview.affiliates[0].payoutOwed).toBe(600000);    // balance → payoutOwed
+      expect(overview.pendingTrials).toBe(1);
+      expect(overview.activeSubscriptions).toBe(4);
+      expect(overview.affiliates[0].totalRevenue).toBe(900000);
+      expect(overview.affiliates[0].payoutOwed).toBe(600000);
       expect(overview.affiliates[1].hasBankInfo).toBe(false);
     });
   });
 
   describe("markPayoutPaid()", () => {
     it("POSTs to /api/admin/[id]/mark-paid", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Admin", email: "admin@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch({ ok: true });
 
       const api = createNeonApi();
@@ -326,11 +254,6 @@ describe("neonApi", () => {
     });
 
     it("includes note in request body when provided", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Admin", email: "admin@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch({ ok: true });
 
       const api = createNeonApi();
@@ -343,11 +266,6 @@ describe("neonApi", () => {
 
   describe("getCommissionSetting()", () => {
     it("returns commissionPerConversion from admin overview", async () => {
-      const mockUser = {
-        uid: "u1", displayName: "Admin", email: "admin@t.com",
-        getIdToken: vi.fn().mockResolvedValue("tok"),
-      };
-      setCurrentUser(mockUser);
       mockFetch({
         totalRevenue: 0, totalPayoutOwed: 0, activeAffiliates: 0,
         commissionPerConversion: 300000, affiliates: [],
