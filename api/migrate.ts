@@ -168,6 +168,7 @@ async function migrate() {
     admin_note      TEXT,
     requested_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at    TIMESTAMPTZ,
+    period          VARCHAR(7),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
