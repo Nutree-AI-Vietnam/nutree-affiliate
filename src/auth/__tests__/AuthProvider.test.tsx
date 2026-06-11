@@ -21,6 +21,12 @@ function makeApi(overrides: Partial<AffiliateApi> = {}): AffiliateApi {
     getAdminOverview: vi.fn(),
     markPayoutPaid: vi.fn(),
     getCommissionSetting: vi.fn(),
+    getMyConversions: vi.fn(),
+    getMyMonthlyEarnings: vi.fn(),
+    requestPayout: vi.fn(),
+    getAdminAffiliateDetail: vi.fn(),
+    getAdminPayoutRequests: vi.fn(),
+    approvePayoutRequest: vi.fn(),
     ...overrides,
   };
 }

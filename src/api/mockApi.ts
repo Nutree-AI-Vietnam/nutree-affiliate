@@ -88,6 +88,15 @@ export function createMockApi(): MockApi {
         p.status === "pending" ? { ...p, status: "paid", paidDate: a.lastPaidDate } : p);
     },
     async getCommissionSetting() { await delay(); return { commissionPerConversion: COMMISSION_PER_CONVERSION }; },
+
+    async getMyConversions() { return []; },
+    async getMyMonthlyEarnings() { return []; },
+    async requestPayout() { return { id: "", status: "pending", period: "", requestedAt: "" }; },
+    async getAdminAffiliateDetail() {
+      return { affiliateId: "", name: "", code: "", status: "", bankInfo: null, monthlyEarnings: [], conversions: [], ledgerEntries: [] };
+    },
+    async getAdminPayoutRequests() { return []; },
+    async approvePayoutRequest() { return { status: "paid", period: "" }; },
   };
 
   function me(): FixtureAffiliate {

@@ -39,6 +39,12 @@ function makeApi(session: Awaited<ReturnType<AffiliateApi["getCurrentSession"]>>
     getCommissionSetting: async () => {
       throw new Error("not used");
     },
+    getMyConversions: async () => { throw new Error("not used"); },
+    getMyMonthlyEarnings: async () => { throw new Error("not used"); },
+    requestPayout: async () => { throw new Error("not used"); },
+    getAdminAffiliateDetail: async () => { throw new Error("not used"); },
+    getAdminPayoutRequests: async () => { throw new Error("not used"); },
+    approvePayoutRequest: async () => { throw new Error("not used"); },
   };
 }
 

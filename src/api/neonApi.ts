@@ -4,6 +4,7 @@ import type { AffiliateApi } from "./index";
 import { authClient, clearNeonAuthTokenCache, getNeonAuthToken } from "../lib/neon-auth";
 import type {
   Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview, AffiliateRow,
+  MonthlyEarning, Conversion, AdminPayoutRequest, AdminAffiliateDetail, LedgerEntry,
 } from "../types";
 
 const BASE_URL = "/api";
@@ -203,6 +204,41 @@ export function createNeonApi(): AffiliateApi {
     async getCommissionSetting(): Promise<{ commissionPerConversion: number }> {
       const data = await authFetch<AdminOverviewResponse>("/admin/overview");
       return { commissionPerConversion: data.commissionPerConversion };
+    },
+
+    async getMyConversions(): Promise<Conversion[]> {
+      return authFetch<Conversion[]>("/affiliate/conversions");
+    },
+
+    async getMyMonthlyEarnings(): Promise<MonthlyEarning[]> {
+      return authFetch<MonthlyEarning[]>("/affiliate/monthly-earnings");
+    },
+
+    async requestPayout(month: string): Promise<{ id: string; status: string; period: string; requestedAt: string }> {
+      return authFetch("/affiliate/payout-request", {
+        method: "POST",
+        body: JSON.stringify({ month }),
+      });
+    },
+
+    async getAdminAffiliateDetail(affiliateId: string): Promise<AdminAffiliateDetail> {
+      const data = await authFetch<{
+        affiliateId: string; name: string; code: string; status: string;
+        bankInfo: BankInfo | null; monthlyEarnings: MonthlyEarning[];
+        conversions: Conversion[]; ledgerEntries: LedgerEntry[];
+      }>(`/admin/affiliates/${affiliateId}`);
+      return data;
+    },
+
+    async getAdminPayoutRequests(): Promise<AdminPayoutRequest[]> {
+      return authFetch<AdminPayoutRequest[]>("/admin/payout-requests");
+    },
+
+    async approvePayoutRequest(requestId: string, note?: string): Promise<{ status: string; period: string }> {
+      return authFetch(`/admin/payout-requests/${requestId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ note: note ?? null }),
+      });
     },
   };
 }
