@@ -5,7 +5,8 @@ import type {
 } from "../types";
 
 export interface AffiliateApi {
-  login(): Promise<Session>;
+  login(nextPath?: string): Promise<Session>;
+  getCurrentSession(): Promise<Session | null>;
   register(): Promise<Session>;
   logout(): Promise<void>;
 

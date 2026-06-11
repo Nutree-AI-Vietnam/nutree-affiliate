@@ -23,7 +23,7 @@ export function createMockApi(): MockApi {
       nextLoginEmail = email;
     },
 
-    async login() {
+    async login(_nextPath?: string) {
       await delay();
       if (nextLoginEmail === adminSession.email) {
         current = adminSession; return adminSession;
@@ -31,6 +31,11 @@ export function createMockApi(): MockApi {
       const a = data.find((x) => x.session.email === nextLoginEmail);
       if (!a) throw new Error(`No fixture user with email: ${nextLoginEmail}`);
       current = a.session; return a.session;
+    },
+
+    async getCurrentSession() {
+      await delay();
+      return current;
     },
 
     async register() {

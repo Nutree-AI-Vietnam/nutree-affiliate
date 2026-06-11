@@ -1,9 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useApi } from "../api";
-import { saveSession } from "../auth/session";
+import { useAuth } from "../auth/AuthProvider";
+import type { Session } from "../types";
 
 type Step = "landing" | "signin";
+
+function normalizeNextPath(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
 
 /* ─── icons ─── */
 function CheckIcon() {
@@ -296,14 +302,65 @@ function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => 
 /* ─── main export ─── */
 export function Login() {
   const api = useApi();
+  const { refreshSession, setSession } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("landing");
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isAuthCallback = searchParams.get("auth") === "callback";
+  const nextPath = normalizeNextPath(searchParams.get("next"));
+  const [step, setStep] = useState<Step>(isAuthCallback ? "signin" : "landing");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isAuthCallback);
+  const [finishingLogin, setFinishingLogin] = useState(isAuthCallback);
 
   // Admin login state
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+
+  function navigateAfterLogin(session: Session) {
+    setSession(session);
+    if (session.role === "admin") {
+      navigate(nextPath?.startsWith("/admin") ? nextPath : "/admin", { replace: true });
+    } else if (!session.onboarded) {
+      navigate("/pt/onboarding", { replace: true });
+    } else {
+      navigate(nextPath?.startsWith("/pt") ? nextPath : "/pt", { replace: true });
+    }
+  }
+
+  useEffect(() => {
+    let active = true;
+
+    async function hydrateSession() {
+      if (isAuthCallback) {
+        setFinishingLogin(true);
+        setLoading(true);
+      }
+
+      for (let attempt = 0; attempt < 5 && active; attempt += 1) {
+        try {
+          const session = await refreshSession();
+          if (!active || !session) return;
+          navigateAfterLogin(session);
+          return;
+        } catch {
+          // Neon Auth may need a moment to expose the session after OAuth redirect.
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      }
+
+      if (active && isAuthCallback) {
+        setFinishingLogin(false);
+        setLoading(false);
+        setError("Không thể hoàn tất đăng nhập. Vui lòng thử lại.");
+      }
+    }
+
+    void hydrateSession();
+    return () => {
+      active = false;
+    };
+  }, [isAuthCallback, navigate, refreshSession]);
 
   async function signInAdmin(e: React.FormEvent) {
     e.preventDefault();
@@ -317,7 +374,7 @@ export function Login() {
       });
       const data = await res.json() as { affiliateId?: string; name?: string; email?: string; role?: string; onboarded?: boolean; adminToken?: string; error?: string };
       if (!res.ok) { setError(data.error ?? "Đăng nhập thất bại"); return; }
-      saveSession({
+      setSession({
         affiliateId: data.affiliateId!,
         name: data.name!,
         email: data.email!,
@@ -337,18 +394,10 @@ export function Login() {
     setError("");
     setLoading(true);
     try {
-      const session = await api.login();
-      saveSession(session);
-      if (session.role === "admin") {
-        navigate("/admin");
-      } else if (!session.onboarded) {
-        navigate("/pt/onboarding");
-      } else {
-        navigate("/pt");
-      }
+      const session = await api.login(nextPath ?? undefined);
+      navigateAfterLogin(session);
     } catch (err: unknown) {
-      // Popup closed by user — ignore
-      if ((err as { code?: string }).code === "auth/popup-closed-by-user") return;
+      if (err instanceof Error && err.message === "Redirecting to Google sign-in") return;
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       setLoading(false);
@@ -400,8 +449,13 @@ export function Login() {
                 Nutree Affiliates
               </span>
               <h1 className="mt-3 text-4xl font-medium leading-[1.1] tracking-[-0.8px] text-neutral-800 dark:text-white">
-                Chào mừng trở lại
+                {finishingLogin ? "Đang hoàn tất đăng nhập" : "Chào mừng trở lại"}
               </h1>
+              {finishingLogin && (
+                <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+                  Đang kết nối tài khoản Google của bạn với Nutree Affiliate…
+                </p>
+              )}
             </div>
 
             {error && (

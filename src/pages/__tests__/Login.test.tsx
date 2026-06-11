@@ -5,21 +5,25 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ApiContext } from "../../api";
 import type { AffiliateApi } from "../../api";
 import { createMockApi } from "../../api/mockApi";
+import { AuthProvider } from "../../auth/AuthProvider";
 import { Login } from "../Login";
 
 function makeMockApiWithGoogle(overrides: Partial<AffiliateApi> = {}): AffiliateApi {
   return { ...createMockApi(), ...overrides };
 }
 
-function setup(api: AffiliateApi = makeMockApiWithGoogle()) {
+function setup(api: AffiliateApi = makeMockApiWithGoogle(), initialPath = "/login") {
   return render(
     <ApiContext.Provider value={api}>
-      <MemoryRouter initialEntries={["/login"]}>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/pt" element={<div>pt dashboard</div>} />
-          <Route path="/admin" element={<div>admin overview</div>} />
-        </Routes>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/pt" element={<div>pt dashboard</div>} />
+            <Route path="/pt/bank" element={<div>pt bank</div>} />
+            <Route path="/admin" element={<div>admin overview</div>} />
+          </Routes>
+        </AuthProvider>
       </MemoryRouter>
     </ApiContext.Provider>
   );
@@ -68,15 +72,42 @@ describe("Login", () => {
     );
   });
 
-  it("does not show an error when popup is closed by user", async () => {
+  it("does not show an error when Neon starts Google redirect", async () => {
     const api = makeMockApiWithGoogle({
-      login: vi.fn().mockRejectedValue(Object.assign(new Error("popup-closed"), { code: "auth/popup-closed-by-user" })),
+      login: vi.fn().mockRejectedValue(new Error("Redirecting to Google sign-in")),
     });
     setup(api);
     await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
     await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
     await waitFor(() =>
-      expect(screen.queryByText(/popup-closed/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/redirecting to google sign-in/i)).not.toBeInTheDocument()
     );
+  });
+
+  it("passes next path into Google sign-in", async () => {
+    const login = vi.fn().mockRejectedValue(new Error("Redirecting to Google sign-in"));
+    const api = makeMockApiWithGoogle({ login });
+
+    setup(api, "/login?next=/pt/bank");
+    await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /đăng nhập với google/i }));
+
+    expect(login).toHaveBeenCalledWith("/pt/bank");
+  });
+
+  it("hydrates callback session and returns to safe next path", async () => {
+    const api = makeMockApiWithGoogle({
+      getCurrentSession: vi.fn().mockResolvedValue({
+        affiliateId: "uid1",
+        name: "Alex",
+        email: "alex@test.com",
+        role: "pt",
+        onboarded: true,
+      }),
+    });
+
+    setup(api, "/login?auth=callback&next=/pt/bank");
+
+    await waitFor(() => expect(screen.getByText("pt bank")).toBeInTheDocument());
   });
 });

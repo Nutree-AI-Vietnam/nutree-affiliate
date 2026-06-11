@@ -94,10 +94,13 @@ interface AdminOverviewResponse {
 
 export function createNeonApi(): AffiliateApi {
   return {
-    async login(): Promise<Session> {
+    async login(nextPath?: string): Promise<Session> {
+      const callbackUrl = new URL("/login", window.location.origin);
+      callbackUrl.searchParams.set("auth", "callback");
+      if (nextPath) callbackUrl.searchParams.set("next", nextPath);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/login?auth=callback`,
+        callbackURL: callbackUrl.toString(),
       });
       throw new Error("Redirecting to Google sign-in");
     },

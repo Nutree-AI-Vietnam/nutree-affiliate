@@ -63,6 +63,18 @@ describe("neonApi", () => {
       });
       expect(mockAuthClient.getSession).not.toHaveBeenCalled();
     });
+
+    it("includes next path in the Google callback URL", async () => {
+      mockAuthClient.signIn.social.mockResolvedValue(undefined);
+
+      const api = createNeonApi();
+
+      await expect(api.login("/pt/bank")).rejects.toThrow("Redirecting to Google sign-in");
+      expect(mockAuthClient.signIn.social).toHaveBeenCalledWith({
+        provider: "google",
+        callbackURL: `${window.location.origin}/login?auth=callback&next=%2Fpt%2Fbank`,
+      });
+    });
   });
 
   describe("getCurrentSession()", () => {
