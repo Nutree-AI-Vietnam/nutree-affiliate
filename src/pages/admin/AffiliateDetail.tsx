@@ -110,9 +110,26 @@ export function AffiliateDetail() {
                     {
                       key: "payoutStatus", header: "Trạng thái",
                       render: (m) => {
-                        if (m.payoutStatus === "paid") return <span className="rounded-full bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-2.5 py-0.5 text-xs font-semibold text-[#1A4739] dark:text-[#29B6A1]">✓ Đã thanh toán</span>;
-                        if (m.payoutStatus === "pending") return <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">Chờ xử lý</span>;
-                        if (m.payoutStatus === "unrequested") return <span className="text-xs text-gray-500">Chưa yêu cầu</span>;
+                        if (m.payoutStatus === "paid") return (
+                          <span className="rounded-full bg-[#E6F7F5] dark:bg-[#29B6A1]/20 px-2.5 py-0.5 text-xs font-semibold text-[#1A4739] dark:text-[#29B6A1]">
+                            ✓ Đã thanh toán
+                          </span>
+                        );
+                        if (m.payoutStatus === "pending") return (
+                          <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                            Chờ xử lý
+                          </span>
+                        );
+                        if (m.payoutStatus === "locked") return (
+                          <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                            🔒 Mở khoá vào {m.lockedUntil
+                              ? new Date(m.lockedUntil).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+                              : "—"}
+                          </span>
+                        );
+                        if (m.payoutStatus === "unrequested") return (
+                          <span className="text-xs text-gray-500">Chưa yêu cầu</span>
+                        );
                         return <span className="text-xs text-gray-400">Đang tích lũy</span>;
                       },
                     },
