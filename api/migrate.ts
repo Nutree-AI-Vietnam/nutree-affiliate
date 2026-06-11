@@ -174,6 +174,22 @@ async function migrate() {
 
   console.log("✓ affiliate_payouts");
 
+  // Add period column (YYYY-MM) for monthly payout tracking
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS period VARCHAR(7)`;
+
+  // Unique constraint: one request per affiliate per calendar month
+  await sql`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uq_affiliate_payouts_period') THEN
+        CREATE UNIQUE INDEX uq_affiliate_payouts_period
+          ON affiliate_payouts (affiliate_id, period)
+          WHERE period IS NOT NULL;
+      END IF;
+    END $$
+  `;
+
+  console.log("✓ affiliate_payouts.period migration");
+
   // ── affiliate_conversions (needed by stats and Phase 2 ingestion) ─────────
   await sql`CREATE TABLE IF NOT EXISTS affiliate_conversions (
     id                VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
