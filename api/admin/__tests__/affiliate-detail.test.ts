@@ -51,6 +51,7 @@ describe("GET /api/admin/affiliates/:id", () => {
       .mockResolvedValueOnce([
         { month: "2026-05", credits: "300000", reversals: "0" },
       ])
+      .mockResolvedValueOnce([])   // locked_until rows
       .mockResolvedValueOnce([])   // payout requests
       .mockResolvedValueOnce([    // conversions
         { created_at: new Date("2026-05-01"), status: "converted" },

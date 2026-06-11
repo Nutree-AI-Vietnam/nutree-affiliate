@@ -45,6 +45,28 @@ export default async function handler(
       ORDER BY DATE_TRUNC('month', created_at) DESC
     `;
 
+    const lockedRows = await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', le.created_at), 'YYYY-MM') AS month,
+        MAX(ac.locked_until) AS latest_locked_until
+      FROM affiliate_ledger_entries le
+      JOIN affiliate_conversions ac ON ac.event_id = le.reference_id
+      WHERE le.affiliate_id = ${affiliateId}
+        AND le.entry_type = 'credit'
+        AND ac.locked_until IS NOT NULL
+      GROUP BY DATE_TRUNC('month', le.created_at)
+    `;
+    const lockedByMonth = new Map<string, string>();
+    for (const r of lockedRows as { month: string; latest_locked_until: Date | string | null }[]) {
+      if (r.latest_locked_until) {
+        lockedByMonth.set(r.month,
+          r.latest_locked_until instanceof Date
+            ? r.latest_locked_until.toISOString()
+            : String(r.latest_locked_until)
+        );
+      }
+    }
+
     const payoutRows = await sql`
       SELECT id, period, status FROM affiliate_payouts
       WHERE affiliate_id = ${affiliateId} AND period IS NOT NULL
@@ -64,13 +86,23 @@ export default async function handler(
       const reversals = Number(r.reversals);
       const net = credits - reversals;
       const payout = payoutByMonth.get(r.month);
+      const latestLockedUntil = lockedByMonth.get(r.month) ?? null;
+      const isLocked = latestLockedUntil !== null && new Date(latestLockedUntil) > now;
+
       let payoutStatus: MonthlyEarning["payoutStatus"];
       if (r.month >= currentMonth) payoutStatus = "accumulating";
       else if (payout?.status === "paid") payoutStatus = "paid";
       else if (payout?.status === "pending") payoutStatus = "pending";
+      else if (isLocked) payoutStatus = "locked";
       else if (net > 0) payoutStatus = "unrequested";
       else payoutStatus = "accumulating";
-      return { month: r.month, credits, reversals, net, payoutStatus, payoutRequestId: payout?.id ?? null, lockedUntil: null };
+
+      return {
+        month: r.month, credits, reversals, net,
+        payoutStatus,
+        payoutRequestId: payout?.id ?? null,
+        lockedUntil: isLocked ? latestLockedUntil : null,
+      };
     });
 
     const convRows = await sql`
