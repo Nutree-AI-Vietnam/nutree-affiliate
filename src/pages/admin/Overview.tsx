@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApi } from "../../api";
 import { NavBar } from "../../components/NavBar";
 import { StatCard } from "../../components/StatCard";
@@ -6,10 +7,14 @@ import { DataTable } from "../../components/DataTable";
 import { currency, dateOrDash } from "../../lib/format";
 import type { AdminOverview } from "../../types";
 
-const adminLinks = [{ to: "/admin", label: "Tổng quan" }];
+const adminLinks = [
+  { to: "/admin", label: "Tổng quan" },
+  { to: "/admin/payouts", label: "Thanh toán" },
+];
 
 export function Overview() {
   const api = useApi();
+  const navigate = useNavigate();
   const [data, setData] = useState<AdminOverview | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -78,7 +83,14 @@ export function Overview() {
                   rowKey={(r) => r.affiliateId}
                   empty="Không có affiliate"
                   columns={[
-                    { key: "name", header: "Tên" },
+                    { key: "name", header: "Tên", render: (r) => (
+                      <button
+                        onClick={() => navigate(`/admin/affiliates/${r.affiliateId}`)}
+                        className="font-medium text-[#29B6A1] hover:underline"
+                      >
+                        {r.name}
+                      </button>
+                    )},
                     { key: "code", header: "Mã" },
                     { key: "pendingTrials", header: "Dùng thử" },
                     { key: "activeSubscriptions", header: "Đăng ký" },
@@ -91,26 +103,6 @@ export function Overview() {
                         : <span className="rounded-full bg-amber-50 dark:bg-amber-900/20 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">Thiếu</span>
                     },
                     { key: "lastPaidDate", header: "Lần trả cuối", render: (r) => dateOrDash(r.lastPaidDate) },
-                    {
-                      key: "action", header: "",
-                      render: (r) => (
-                        <button
-                          disabled={r.payoutOwed <= 0}
-                          className="rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-                          style={{ background: "linear-gradient(135deg, #1A4739 0%, #29B6A1 100%)" }}
-                          onClick={async () => {
-                            try {
-                              await api.markPayoutPaid(r.affiliateId);
-                              await load();
-                            } catch (e) {
-                              alert(e instanceof Error ? e.message : "Lỗi không xác định");
-                            }
-                          }}
-                        >
-                          Đánh dấu đã trả
-                        </button>
-                      ),
-                    },
                   ]}
                 />
               </div>
