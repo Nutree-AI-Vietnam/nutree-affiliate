@@ -2,6 +2,7 @@
 import { createContext, useContext } from "react";
 import type {
   Session, MyStats, ReferralInfo, BankInfo, Payout, AdminOverview,
+  MonthlyEarning, Conversion, AdminPayoutRequest, AdminAffiliateDetail,
 } from "../types";
 
 export interface AffiliateApi {
@@ -19,6 +20,14 @@ export interface AffiliateApi {
   getAdminOverview(): Promise<AdminOverview>;
   markPayoutPaid(affiliateId: string, note?: string): Promise<void>;
   getCommissionSetting(): Promise<{ commissionPerConversion: number }>;
+
+  getMyConversions(): Promise<Conversion[]>;
+  getMyMonthlyEarnings(): Promise<MonthlyEarning[]>;
+  requestPayout(month: string): Promise<{ id: string; status: string; period: string; requestedAt: string }>;
+
+  getAdminAffiliateDetail(affiliateId: string): Promise<AdminAffiliateDetail>;
+  getAdminPayoutRequests(): Promise<AdminPayoutRequest[]>;
+  approvePayoutRequest(requestId: string, note?: string): Promise<{ status: string; period: string }>;
 }
 
 export const ApiContext = createContext<AffiliateApi | null>(null);

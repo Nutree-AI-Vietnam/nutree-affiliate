@@ -59,3 +59,48 @@ export interface AdminOverview {
   commissionPerConversion: number;
   affiliates: AffiliateRow[];
 }
+
+export interface MonthlyEarning {
+  month: string;           // "2026-06"
+  credits: number;
+  reversals: number;
+  net: number;
+  payoutStatus: "accumulating" | "unrequested" | "pending" | "paid";
+  payoutRequestId: string | null;
+}
+
+export interface Conversion {
+  joinedAt: string;
+  status: "converted";
+}
+
+export interface LedgerEntry {
+  id: string;
+  entryType: string;
+  amount: number;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface AdminPayoutRequest {
+  id: string;
+  affiliateId: string;
+  affiliateName: string;
+  period: string;
+  amount: number;
+  status: "pending" | "paid";
+  requestedAt: string;
+  completedAt: string | null;
+  adminNote: string | null;
+}
+
+export interface AdminAffiliateDetail {
+  affiliateId: string;
+  name: string;
+  code: string;
+  status: string;
+  bankInfo: BankInfo | null;
+  monthlyEarnings: MonthlyEarning[];
+  conversions: Conversion[];
+  ledgerEntries: LedgerEntry[];
+}
