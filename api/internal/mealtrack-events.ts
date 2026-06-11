@@ -40,16 +40,28 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
         `;
         codeId = (codeRows[0] as { id: string } | undefined)?.id ?? null;
       }
+      const trialOccurredAt = evt.occurred_at ?? new Date().toISOString();
       // UNIQUE(user_id) enforces one-attribution-per-user; duplicate calls are no-ops.
       await sql`
-        INSERT INTO affiliate_conversions (affiliate_id, user_id, affiliate_code_id, event_id, status)
-        VALUES (${affiliate_id}, ${mealtrack_user_id}, ${codeId}, ${event_id}, 'trial')
+        INSERT INTO affiliate_conversions
+          (affiliate_id, user_id, affiliate_code_id, event_id, status, occurred_at, locked_until)
+        VALUES (
+          ${affiliate_id}, ${mealtrack_user_id}, ${codeId}, ${event_id}, 'trial',
+          ${trialOccurredAt},
+          ${trialOccurredAt}::timestamptz + INTERVAL '15 days'
+        )
         ON CONFLICT (user_id) DO NOTHING
       `;
       break;
     }
 
     case "subscription_initial_purchase": {
+      // Fall back to NOW() if MealTrack omits occurred_at; log a warning so it's visible.
+      const effectiveOccurredAt = evt.occurred_at ?? new Date().toISOString();
+      if (!evt.occurred_at) {
+        console.warn("subscription_initial_purchase missing occurred_at, using NOW()", evt.event_id);
+      }
+
       // nutree-affiliate owns affiliate_id — resolve from conversions by user_id.
       const trialRows = await sql`
         SELECT id, affiliate_id FROM affiliate_conversions
@@ -60,7 +72,10 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
 
       if (trial) {
         await sql`
-          UPDATE affiliate_conversions SET status = 'converted', converted_at = NOW()
+          UPDATE affiliate_conversions
+          SET status = 'converted', converted_at = NOW(),
+              occurred_at = ${effectiveOccurredAt},
+              locked_until = ${effectiveOccurredAt}::timestamptz + INTERVAL '15 days'
           WHERE id = ${trial.id}
         `;
         const rule = await getActiveCommissionRule(trial.affiliate_id);
@@ -73,8 +88,13 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
         // No prior trial attribution — insert converted directly if affiliate_id provided.
         if (affiliate_id) {
           await sql`
-            INSERT INTO affiliate_conversions (affiliate_id, user_id, event_id, status, converted_at)
-            VALUES (${affiliate_id}, ${mealtrack_user_id}, ${event_id}, 'converted', NOW())
+            INSERT INTO affiliate_conversions
+              (affiliate_id, user_id, event_id, status, converted_at, occurred_at, locked_until)
+            VALUES (
+              ${affiliate_id}, ${mealtrack_user_id}, ${event_id}, 'converted', NOW(),
+              ${effectiveOccurredAt},
+              ${effectiveOccurredAt}::timestamptz + INTERVAL '15 days'
+            )
             ON CONFLICT (user_id) DO NOTHING
           `;
           const rule = await getActiveCommissionRule(affiliate_id);

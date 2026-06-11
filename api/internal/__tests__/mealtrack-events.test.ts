@@ -197,4 +197,62 @@ describe("POST /api/internal/mealtrack-events", () => {
     expect((res["body"] as { status: string }).status).toBe("accepted");
     expect(mockInsertLedger).not.toHaveBeenCalled();
   });
+
+  it("sets occurred_at and locked_until when trial row is updated on subscription_initial_purchase", async () => {
+    const occurredAt = "2026-06-01T10:00:00.000Z";
+    const evt = {
+      event_id: "evt-ts-1",
+      event_type: "subscription_initial_purchase",
+      occurred_at: occurredAt,
+      mealtrack_user_id: "user-ts-1",
+    };
+    mockReadBody.mockResolvedValue(JSON.stringify(evt));
+
+    // inbox insert → returns 1 row (new event)
+    mockSql.mockResolvedValueOnce([{ id: "inbox-1" }]);
+    // trial lookup → returns trial row
+    mockSql.mockResolvedValueOnce([{ id: "conv-1", affiliate_id: "aff-1" }]);
+    // UPDATE conversion (the call we're testing)
+    const updateCall = vi.fn().mockResolvedValue([]);
+    mockSql.mockImplementationOnce(updateCall);
+    // processed_at update
+    mockSql.mockResolvedValueOnce([]);
+
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+
+    expect(res["statusCode"]).toBe(200);
+    expect(res["body"]).toMatchObject({ status: "accepted" });
+
+    // Verify the UPDATE call included occurred_at and locked_until
+    const updateSqlArgs = updateCall.mock.calls[0];
+    const sqlStrings = updateSqlArgs[0] as TemplateStringsArray;
+    const fullQuery = sqlStrings.join("$?");
+    expect(fullQuery).toContain("occurred_at");
+    expect(fullQuery).toContain("locked_until");
+  });
+
+  it("falls back to NOW() when occurred_at is missing and still sets locked_until", async () => {
+    const evt = {
+      event_id: "evt-ts-2",
+      event_type: "subscription_initial_purchase",
+      // occurred_at intentionally omitted
+      mealtrack_user_id: "user-ts-2",
+    };
+    mockReadBody.mockResolvedValue(JSON.stringify(evt));
+
+    mockSql.mockResolvedValueOnce([{ id: "inbox-2" }]);
+    mockSql.mockResolvedValueOnce([{ id: "conv-2", affiliate_id: "aff-2" }]);
+    const updateCall = vi.fn().mockResolvedValue([]);
+    mockSql.mockImplementationOnce(updateCall);
+    mockSql.mockResolvedValueOnce([]);
+
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+
+    expect(res["statusCode"]).toBe(200);
+    const sqlStrings = updateCall.mock.calls[0][0] as TemplateStringsArray;
+    const fullQuery = sqlStrings.join("$?");
+    expect(fullQuery).toContain("locked_until");
+  });
 });
