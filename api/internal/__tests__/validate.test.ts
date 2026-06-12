@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 
-vi.mock("../../_lib/db", () => ({ sql: vi.fn() }));
+vi.mock("../../_lib/db", () => ({
+  ensureAffiliateIdentitySchema: vi.fn().mockResolvedValue(undefined),
+  sql: vi.fn(),
+}));
 vi.mock("../../_lib/internal-auth", () => ({
   verifyInternalRequest: vi.fn(),
   readRawBody: vi.fn(),

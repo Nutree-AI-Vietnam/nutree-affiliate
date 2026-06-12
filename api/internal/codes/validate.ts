@@ -2,7 +2,7 @@
 // Private endpoint for MealTrack to validate affiliate codes without DB access.
 // Auth: HMAC-SHA256 via X-Timestamp + X-Signature headers.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../../_lib/db";
+import { ensureAffiliateIdentitySchema, sql } from "../../_lib/db";
 import { ApiError } from "../../_lib/auth";
 import { verifyInternalRequest, readRawBody } from "../../_lib/internal-auth";
 
@@ -19,6 +19,7 @@ export default async function handler(
   try {
     const rawBody = await readRawBody(req);
     verifyInternalRequest(req, rawBody);
+    await ensureAffiliateIdentitySchema();
 
     const body = JSON.parse(rawBody) as { code?: unknown };
     if (!body.code || typeof body.code !== "string") {

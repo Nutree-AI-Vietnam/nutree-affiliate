@@ -1,11 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { DataTable } from "../DataTable";
+import { DataTable, type Column } from "../DataTable";
+
+interface Row {
+  name: string;
+  amt: number;
+}
 
 describe("DataTable", () => {
-  const cols = [
+  const cols: Column<Row>[] = [
     { key: "name", header: "Name" },
-    { key: "amt", header: "Amount", render: (r: any) => `$${r.amt}` },
+    { key: "amt", header: "Amount", render: (r) => `$${r.amt}` },
   ];
   it("renders headers and rows", () => {
     render(<DataTable columns={cols} rows={[{ name: "Alex", amt: 80 }]} rowKey={(r) => r.name} />);

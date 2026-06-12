@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useApi } from "../api";
 import { useAuth } from "../auth/AuthProvider";
+import { hasNeonAuthSessionVerifier } from "../auth/neon-callback";
 import type { Session } from "../types";
 
 type Step = "landing" | "signin";
@@ -206,7 +207,7 @@ function WhyNutree() {
 }
 
 /* ─── landing hero ─── */
-function LandingView({ onApply, onAdminLogin: _onAdminLogin }: { onApply: () => void; onAdminLogin: () => void }) {
+function LandingView({ onApply }: { onApply: () => void }) {
   return (
     <div className="relative z-10 flex flex-col gap-8 px-6 py-10">
       {/* Brand tag */}
@@ -306,9 +307,11 @@ export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const isAuthCallback = searchParams.get("auth") === "callback";
+  const hasAuthCallbackIntent = searchParams.get("auth") === "callback";
+  const hasAuthSessionVerifier = hasNeonAuthSessionVerifier(location.search);
+  const isAuthCallback = hasAuthCallbackIntent && hasAuthSessionVerifier;
   const nextPath = normalizeNextPath(searchParams.get("next"));
-  const [step, setStep] = useState<Step>(isAuthCallback ? "signin" : "landing");
+  const [step, setStep] = useState<Step>(hasAuthCallbackIntent ? "signin" : "landing");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(isAuthCallback);
   const [finishingLogin, setFinishingLogin] = useState(isAuthCallback);
@@ -317,7 +320,7 @@ export function Login() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
-  function navigateAfterLogin(session: Session) {
+  const navigateAfterLogin = useCallback((session: Session) => {
     setSession(session);
     if (session.role === "admin") {
       navigate(nextPath?.startsWith("/admin") ? nextPath : "/admin", { replace: true });
@@ -326,7 +329,7 @@ export function Login() {
     } else {
       navigate(nextPath?.startsWith("/pt") ? nextPath : "/pt", { replace: true });
     }
-  }
+  }, [navigate, nextPath, setSession]);
 
   useEffect(() => {
     let active = true;
@@ -366,7 +369,24 @@ export function Login() {
     return () => {
       active = false;
     };
-  }, [isAuthCallback, navigate, refreshSession]);
+  }, [isAuthCallback, navigateAfterLogin, refreshSession]);
+
+  useEffect(() => {
+    if (!hasAuthCallbackIntent || hasAuthSessionVerifier) return;
+    const params = new URLSearchParams(location.search);
+    params.delete("auth");
+    const search = params.toString();
+    navigate(
+      { pathname: location.pathname, search: search ? `?${search}` : "" },
+      { replace: true },
+    );
+  }, [
+    hasAuthCallbackIntent,
+    hasAuthSessionVerifier,
+    location.pathname,
+    location.search,
+    navigate,
+  ]);
 
   async function signInAdmin(e: React.FormEvent) {
     e.preventDefault();
@@ -445,7 +465,7 @@ export function Login() {
         <div className="pointer-events-none absolute left-0 top-0 h-full w-full border-x border-neutral-200 dark:border-white/10 [mask-image:linear-gradient(black_60%,transparent)]" />
 
         {step === "landing" && (
-          <LandingView onApply={() => setStep("signin")} onAdminLogin={() => setStep("signin")} />
+          <LandingView onApply={() => setStep("signin")} />
         )}
 
         {step === "signin" && (

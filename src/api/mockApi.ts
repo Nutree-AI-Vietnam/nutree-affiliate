@@ -23,7 +23,7 @@ export function createMockApi(): MockApi {
       nextLoginEmail = email;
     },
 
-    async login(_nextPath?: string) {
+    async login() {
       await delay();
       if (nextLoginEmail === adminSession.email) {
         current = adminSession; return adminSession;
@@ -79,7 +79,7 @@ export function createMockApi(): MockApi {
         affiliates: rows,
       };
     },
-    async markPayoutPaid(affiliateId, _note) {
+    async markPayoutPaid(affiliateId) {
       await delay();
       const a = data.find((x) => x.session.affiliateId === affiliateId);
       if (!a) throw new Error("Affiliate not found");

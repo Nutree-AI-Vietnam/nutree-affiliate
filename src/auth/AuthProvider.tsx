@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -77,7 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (hasNeonAuthSessionVerifier()) return;
-    void refreshSession();
+    const timer = window.setTimeout(() => {
+      void refreshSession();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [refreshSession]);
 
   useEffect(() => {

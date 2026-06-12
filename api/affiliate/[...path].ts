@@ -8,6 +8,7 @@ import payoutRequest from "../_lib/affiliate/payout-request";
 import payouts from "../_lib/affiliate/payouts";
 import referralCode from "../_lib/affiliate/referral-code";
 import stats from "../_lib/affiliate/stats";
+import { ensureAffiliateIdentitySchema } from "../_lib/db";
 import { normalizeCatchAllPath, normalizeRequestPath } from "../_lib/path-routing";
 
 type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
@@ -38,5 +39,6 @@ export default async function handler(
     res.status(404).json({ error: "Not found" });
     return;
   }
+  await ensureAffiliateIdentitySchema();
   await selected(req, res);
 }

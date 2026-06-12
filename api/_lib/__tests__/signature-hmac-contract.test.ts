@@ -8,6 +8,7 @@
  * Known vector also embedded in:
  * mealtrack_backend/tests/unit/infra/adapters/test_affiliate_service_adapter_signing.py
  */
+import { createHmac } from "crypto";
 import { describe, it, expect } from "vitest";
 import { createSignature } from "../signature";
 
@@ -25,7 +26,6 @@ describe("createSignature cross-service contract", () => {
   });
 
   it("algorithm is HMAC-SHA256 of `${timestamp}.${body}`", () => {
-    const { createHmac } = require("crypto");
     const expected = createHmac("sha256", SECRET)
       .update(`${TIMESTAMP}.${BODY}`)
       .digest("hex");

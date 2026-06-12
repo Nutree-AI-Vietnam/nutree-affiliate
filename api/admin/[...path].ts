@@ -5,6 +5,7 @@ import login from "../_lib/admin/login";
 import markPaid from "../_lib/admin/mark-paid";
 import overview from "../_lib/admin/overview";
 import payoutRequests from "../_lib/admin/payout-requests";
+import { ensureAffiliateIdentitySchema } from "../_lib/db";
 import { normalizeCatchAllPath, normalizeRequestPath } from "../_lib/path-routing";
 
 type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
@@ -51,5 +52,6 @@ export default async function handler(
     res.status(404).json({ error: "Not found" });
     return;
   }
+  await ensureAffiliateIdentitySchema();
   await selected(req, res);
 }

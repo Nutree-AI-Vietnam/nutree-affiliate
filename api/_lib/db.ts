@@ -26,3 +26,58 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const sql = neon(process.env.DATABASE_URL);
+
+let affiliateIdentitySchemaPromise: Promise<void> | null = null;
+
+async function applyAffiliateIdentitySchema(): Promise<void> {
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_provider VARCHAR NOT NULL DEFAULT 'neon'`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_subject_id VARCHAR`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS display_name VARCHAR NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS partner_type VARCHAR`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'`;
+  await sql`ALTER TABLE affiliates ALTER COLUMN auth_provider SET DEFAULT 'neon'`;
+
+  await sql`
+    UPDATE affiliates
+    SET auth_subject_id = firebase_uid
+    WHERE auth_subject_id IS NULL AND firebase_uid IS NOT NULL
+  `;
+  await sql`
+    UPDATE affiliates
+    SET display_name = name
+    WHERE (display_name IS NULL OR display_name = '') AND name IS NOT NULL AND name != ''
+  `;
+  await sql`UPDATE affiliates SET partner_type = role WHERE partner_type IS NULL AND role IN ('pt', 'kol')`;
+  await sql`UPDATE affiliates SET role = 'affiliate' WHERE role IN ('pt', 'kol')`;
+
+  await sql`CREATE TABLE IF NOT EXISTS affiliate_codes (
+    id           VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    affiliate_id VARCHAR NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+    code         VARCHAR NOT NULL,
+    status       VARCHAR NOT NULL DEFAULT 'active',
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uniq_active_affiliate_code') THEN
+        CREATE UNIQUE INDEX uniq_active_affiliate_code ON affiliate_codes (UPPER(code)) WHERE status = 'active';
+      END IF;
+    END $$
+  `;
+  await sql`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_affiliates_auth_identity') THEN
+        ALTER TABLE affiliates ADD CONSTRAINT uq_affiliates_auth_identity UNIQUE (auth_provider, auth_subject_id);
+      END IF;
+    END $$
+  `;
+}
+
+export function ensureAffiliateIdentitySchema(): Promise<void> {
+  affiliateIdentitySchemaPromise ??= applyAffiliateIdentitySchema().catch((err) => {
+    affiliateIdentitySchemaPromise = null;
+    throw err;
+  });
+  return affiliateIdentitySchemaPromise;
+}

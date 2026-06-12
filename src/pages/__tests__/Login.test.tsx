@@ -95,7 +95,7 @@ describe("Login", () => {
     expect(login).toHaveBeenCalledWith("/pt/bank");
   });
 
-  it("hydrates callback session and returns to safe next path", async () => {
+  it("hydrates verifier callback session and returns to safe next path", async () => {
     const api = makeMockApiWithGoogle({
       getCurrentSession: vi.fn().mockResolvedValue({
         affiliateId: "uid1",
@@ -106,9 +106,20 @@ describe("Login", () => {
       }),
     });
 
-    setup(api, "/login?auth=callback&next=/pt/bank");
+    setup(api, "/login?auth=callback&neon_auth_session_verifier=test-verifier&next=/pt/bank");
 
     await waitFor(() => expect(screen.getByText("pt bank")).toBeInTheDocument());
+  });
+
+  it("does not trap stale callback URLs without a Neon verifier on an error state", async () => {
+    const api = makeMockApiWithGoogle({
+      getCurrentSession: vi.fn().mockResolvedValue(null),
+    });
+
+    setup(api, "/login?auth=callback");
+
+    expect(screen.getByRole("button", { name: /đăng nhập với google/i })).toBeInTheDocument();
+    expect(screen.queryByText(/không thể hoàn tất đăng nhập/i)).not.toBeInTheDocument();
   });
 
   it("keeps retrying callback hydration while Neon session is not ready yet", async () => {
