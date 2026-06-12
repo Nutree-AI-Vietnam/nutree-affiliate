@@ -5,12 +5,12 @@ import login from "../_lib/admin/login";
 import markPaid from "../_lib/admin/mark-paid";
 import overview from "../_lib/admin/overview";
 import payoutRequests from "../_lib/admin/payout-requests";
+import { normalizeCatchAllPath, normalizeRequestPath } from "../_lib/path-routing";
 
 type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
-function pathParts(path: string | string[] | undefined): string[] {
-  if (Array.isArray(path)) return path;
-  return path ? [path] : [];
+export function adminPathParts(path: string | string[] | undefined): string[] {
+  return normalizeCatchAllPath(path, "admin");
 }
 
 function withId(req: VercelRequest, id: string): void {
@@ -18,7 +18,8 @@ function withId(req: VercelRequest, id: string): void {
 }
 
 function resolveRoute(req: VercelRequest): Handler | null {
-  const parts = pathParts(req.query.path);
+  const routePath = req.query.path ?? normalizeRequestPath(req.url, "admin");
+  const parts = adminPathParts(routePath);
   if (parts.length === 1 && parts[0] === "login") return login;
   if (parts.length === 1 && parts[0] === "overview") return overview;
   if (parts.length === 1 && parts[0] === "payout-requests") return payoutRequests;

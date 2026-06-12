@@ -8,6 +8,7 @@ import payoutRequest from "../_lib/affiliate/payout-request";
 import payouts from "../_lib/affiliate/payouts";
 import referralCode from "../_lib/affiliate/referral-code";
 import stats from "../_lib/affiliate/stats";
+import { normalizeCatchAllPath, normalizeRequestPath } from "../_lib/path-routing";
 
 type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
@@ -23,16 +24,16 @@ const routes: Record<string, Handler> = {
   stats,
 };
 
-function routeKey(path: string | string[] | undefined): string {
-  if (Array.isArray(path)) return path.join("/");
-  return path ?? "";
+export function affiliateRouteKey(path: string | string[] | undefined): string {
+  return normalizeCatchAllPath(path, "affiliate").join("/");
 }
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<void> {
-  const selected = routes[routeKey(req.query.path)];
+  const routePath = req.query.path ?? normalizeRequestPath(req.url, "affiliate");
+  const selected = routes[affiliateRouteKey(routePath)];
   if (!selected) {
     res.status(404).json({ error: "Not found" });
     return;

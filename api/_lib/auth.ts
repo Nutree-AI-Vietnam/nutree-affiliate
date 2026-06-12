@@ -1,7 +1,6 @@
 // api/_lib/auth.ts
 import type { VercelRequest } from "@vercel/node";
 import { createHmac } from "crypto";
-import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { JWTPayload } from "jose";
 
 export interface AuthUser {
@@ -49,7 +48,15 @@ export function verifyAdminSession(req: VercelRequest): AdminSessionUser {
 }
 
 let cachedAuthBaseUrl: string | null = null;
-let cachedJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+type JoseModule = typeof import("jose");
+
+let joseModulePromise: Promise<JoseModule> | null = null;
+let cachedJwks: ReturnType<JoseModule["createRemoteJWKSet"]> | null = null;
+
+function loadJose(): Promise<JoseModule> {
+  joseModulePromise ??= import("jose");
+  return joseModulePromise;
+}
 
 function neonAuthBaseUrl(): string {
   const baseUrl = process.env.NEON_AUTH_BASE_URL || process.env.VITE_NEON_AUTH_URL;
@@ -57,9 +64,10 @@ function neonAuthBaseUrl(): string {
   return baseUrl.replace(/\/$/, "");
 }
 
-function neonJwks() {
+async function neonJwks() {
   const baseUrl = neonAuthBaseUrl();
   if (!cachedJwks || cachedAuthBaseUrl !== baseUrl) {
+    const { createRemoteJWKSet } = await loadJose();
     cachedAuthBaseUrl = baseUrl;
     cachedJwks = createRemoteJWKSet(
       new URL(`${baseUrl}/.well-known/jwks.json`),
@@ -94,7 +102,8 @@ export async function verifyAuth(req: VercelRequest): Promise<AuthUser> {
   const baseUrl = neonAuthBaseUrl();
 
   try {
-    const { payload } = await jwtVerify(token, neonJwks(), {
+    const { jwtVerify } = await loadJose();
+    const { payload } = await jwtVerify(token, await neonJwks(), {
       issuer: new URL(baseUrl).origin,
     });
     return toAuthUser(payload);
