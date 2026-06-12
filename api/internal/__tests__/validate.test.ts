@@ -72,6 +72,14 @@ describe("POST /api/internal/codes/validate", () => {
     expect((res["body"] as { error: string }).error).toContain("Invalid JSON");
   });
 
+  it("returns 400 when Vercel rejects malformed JSON while reading the body", async () => {
+    mockReadBody.mockRejectedValue(new Error("Invalid JSON"));
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+    expect(res["statusCode"]).toBe(400);
+    expect((res["body"] as { error: string }).error).toContain("Invalid JSON");
+  });
+
   it("returns active:false for non-existent code", async () => {
     mockSql.mockResolvedValueOnce([]); // no rows
     const res = makeRes();

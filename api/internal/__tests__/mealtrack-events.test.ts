@@ -88,6 +88,14 @@ describe("POST /api/internal/mealtrack-events", () => {
     expect((res["body"] as { error: string }).error).toContain("Invalid JSON");
   });
 
+  it("returns 400 when Vercel rejects malformed JSON while reading the body", async () => {
+    mockReadBody.mockRejectedValue(new Error("Invalid JSON"));
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+    expect(res["statusCode"]).toBe(400);
+    expect((res["body"] as { error: string }).error).toContain("Invalid JSON");
+  });
+
   it("returns 400 for affiliate_attribution_created without affiliate_id", async () => {
     const evt = { event_id: "x", event_type: "affiliate_attribution_created", mealtrack_user_id: "u-1" };
     mockReadBody.mockResolvedValue(JSON.stringify(evt));

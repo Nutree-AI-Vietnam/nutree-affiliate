@@ -291,7 +291,13 @@ export default async function handler(
     return;
   }
   try {
-    const rawBody = await readRawBody(req);
+    let rawBody: string;
+    try {
+      rawBody = await readRawBody(req);
+    } catch {
+      res.status(400).json({ error: "Invalid JSON body" });
+      return;
+    }
     verifyInternalRequest(req, rawBody);
 
     let evt: EventEnvelope;
