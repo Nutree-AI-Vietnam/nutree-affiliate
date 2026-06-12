@@ -10,6 +10,7 @@ import {
 import { useApi } from "../api";
 import type { Session } from "../types";
 import { AUTH_REQUIRED_EVENT } from "./auth-events";
+import { hasNeonAuthSessionVerifier } from "./neon-callback";
 import { clearSession, saveSession } from "./session";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [api, clearAuth]);
 
   useEffect(() => {
+    if (hasNeonAuthSessionVerifier()) return;
     void refreshSession();
   }, [refreshSession]);
 

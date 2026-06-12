@@ -340,13 +340,19 @@ export function Login() {
       for (let attempt = 0; attempt < 5 && active; attempt += 1) {
         try {
           const session = await refreshSession();
-          if (!active || !session) return;
-          navigateAfterLogin(session);
-          return;
+          if (!active) return;
+          if (session) {
+            navigateAfterLogin(session);
+            return;
+          }
+          if (!isAuthCallback) return;
         } catch {
+          if (!isAuthCallback) return;
           // Neon Auth may need a moment to expose the session after OAuth redirect.
         }
-        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+        if (attempt < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+        }
       }
 
       if (active && isAuthCallback) {

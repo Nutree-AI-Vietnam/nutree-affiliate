@@ -110,4 +110,23 @@ describe("Login", () => {
 
     await waitFor(() => expect(screen.getByText("pt bank")).toBeInTheDocument());
   });
+
+  it("keeps retrying callback hydration while Neon session is not ready yet", async () => {
+    const api = makeMockApiWithGoogle({
+      getCurrentSession: vi.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValue({
+          affiliateId: "uid1",
+          name: "Alex",
+          email: "alex@test.com",
+          role: "pt",
+          onboarded: true,
+        }),
+    });
+
+    setup(api, "/login?auth=callback&neon_auth_session_verifier=test-verifier");
+
+    await waitFor(() => expect(screen.getByText("pt dashboard")).toBeInTheDocument());
+  });
 });
