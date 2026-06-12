@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loadSession, saveSession } from "../../auth/session";
+import { useAuth } from "../../auth/AuthProvider";
 import { getNeonAuthToken } from "../../lib/neon-auth";
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const session = loadSession();
+  const { session, setSession } = useAuth();
 
   const [name, setName] = useState(session?.name ?? "");
   const [code, setCode] = useState("");
@@ -42,9 +42,8 @@ export function Onboarding() {
       const data = await res.json() as { ok?: boolean; error?: string };
       if (!res.ok) { setError(data.error ?? "Lỗi không xác định"); return; }
 
-      // Update local session
       if (session) {
-        saveSession({ ...session, name: name.trim(), onboarded: true });
+        setSession({ ...session, name: name.trim(), onboarded: true });
       }
       navigate("/pt", { replace: true });
     } catch {
