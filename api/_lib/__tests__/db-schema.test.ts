@@ -22,7 +22,7 @@ describe("ensureAffiliateIdentitySchema", () => {
     delete process.env.DATABASE_URL;
   });
 
-  it("removes the legacy Firebase-only not-null constraint", async () => {
+  it("aligns legacy affiliate and stats schema for Neon runtime", async () => {
     const { ensureAffiliateIdentitySchema } = await import("../db");
 
     await ensureAffiliateIdentitySchema();
@@ -36,5 +36,20 @@ describe("ensureAffiliateIdentitySchema", () => {
     expect(mockState.queries).toContain(
       "ALTER TABLE affiliates ALTER COLUMN name SET DEFAULT ''",
     );
+    expect(
+      mockState.queries.some((query) =>
+        query.includes("CREATE TABLE IF NOT EXISTS affiliate_ledger_entries"),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes("CREATE TABLE IF NOT EXISTS affiliate_conversions"),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes("CREATE TABLE IF NOT EXISTS affiliate_payouts"),
+      ),
+    ).toBe(true);
   });
 });
