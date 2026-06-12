@@ -51,5 +51,43 @@ describe("ensureAffiliateIdentitySchema", () => {
         query.includes("CREATE TABLE IF NOT EXISTS affiliate_payouts"),
       ),
     ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes(
+          "ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS entry_type",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes(
+          "ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS amount",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes(
+          "ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS status",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes(
+          "ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS completed_at",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes("uq_affiliate_payouts_period"),
+      ),
+    ).toBe(false);
+    expect(
+      mockState.queries.some((query) =>
+        query.includes("uq_affiliate_conversions_user_id"),
+      ),
+    ).toBe(false);
   });
 });

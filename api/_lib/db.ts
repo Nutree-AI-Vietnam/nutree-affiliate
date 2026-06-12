@@ -165,9 +165,68 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_ledger_entries ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS entry_type VARCHAR`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS amount NUMERIC`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS reference_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS reference_type VARCHAR`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS note TEXT`;
+  await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
+
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_payouts ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS amount NUMERIC`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'requested'`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS payment_method VARCHAR`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS payment_details JSONB`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS admin_note TEXT`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS requested_at TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ`;
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS period VARCHAR(7)`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
+
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_conversions ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS user_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS affiliate_code_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS event_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'trial'`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS converted_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS occurred_at TIMESTAMPTZ`;
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ`;
+
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_webhook_events ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS event_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS event_type VARCHAR`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending'`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS payload JSONB`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS error_message TEXT`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS received_at TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS processed_at TIMESTAMPTZ`;
+
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE commission_rules ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS rule_name VARCHAR`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS partner_type VARCHAR`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS trigger_event VARCHAR DEFAULT 'first_paid'`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 300000`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'VND'`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS validity_days INTEGER`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT FALSE`;
+  await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
+
   await sql`
     INSERT INTO commission_rules (rule_name, trigger_event, amount, currency, is_active, is_default)
     SELECT 'Default first-paid commission', 'first_paid', 300000, 'VND', true, true
@@ -194,22 +253,6 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
         SELECT 1 FROM affiliate_ledger_entries e
         WHERE e.idempotency_key = 'migration_withdrawn_' || a.id
       )
-  `;
-  await sql`
-    DO $$ BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uq_affiliate_payouts_period') THEN
-        CREATE UNIQUE INDEX uq_affiliate_payouts_period
-          ON affiliate_payouts (affiliate_id, period)
-          WHERE period IS NOT NULL;
-      END IF;
-    END $$
-  `;
-  await sql`
-    DO $$ BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_affiliate_conversions_user_id') THEN
-        ALTER TABLE affiliate_conversions ADD CONSTRAINT uq_affiliate_conversions_user_id UNIQUE (user_id);
-      END IF;
-    END $$
   `;
 }
 
