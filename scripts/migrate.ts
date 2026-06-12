@@ -34,12 +34,15 @@ async function migrate() {
   )`;
 
   // Idempotent column additions for existing production tables
+  await sql`ALTER TABLE affiliates ALTER COLUMN firebase_uid DROP NOT NULL`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_provider VARCHAR NOT NULL DEFAULT 'neon'`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_subject_id VARCHAR`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS display_name VARCHAR`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS name VARCHAR NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS partner_type VARCHAR`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'`;
   await sql`ALTER TABLE affiliates ALTER COLUMN auth_provider SET DEFAULT 'neon'`;
+  await sql`ALTER TABLE affiliates ALTER COLUMN name SET DEFAULT ''`;
 
   // Backfill new identity columns from old firebase_uid
   await sql`UPDATE affiliates SET auth_subject_id = firebase_uid WHERE auth_subject_id IS NULL AND firebase_uid IS NOT NULL`;

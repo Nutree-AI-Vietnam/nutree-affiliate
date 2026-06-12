@@ -30,12 +30,15 @@ export const sql = neon(process.env.DATABASE_URL);
 let affiliateIdentitySchemaPromise: Promise<void> | null = null;
 
 async function applyAffiliateIdentitySchema(): Promise<void> {
+  await sql`ALTER TABLE affiliates ALTER COLUMN firebase_uid DROP NOT NULL`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_provider VARCHAR NOT NULL DEFAULT 'neon'`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS auth_subject_id VARCHAR`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS display_name VARCHAR NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS name VARCHAR NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS partner_type VARCHAR`;
   await sql`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'`;
   await sql`ALTER TABLE affiliates ALTER COLUMN auth_provider SET DEFAULT 'neon'`;
+  await sql`ALTER TABLE affiliates ALTER COLUMN name SET DEFAULT ''`;
 
   await sql`
     UPDATE affiliates
