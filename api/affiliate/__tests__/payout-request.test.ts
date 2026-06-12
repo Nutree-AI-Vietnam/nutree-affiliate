@@ -64,7 +64,7 @@ describe("POST /api/affiliate/payout-request", () => {
       .mockResolvedValueOnce([{ latest_locked: null }])
       .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
       .mockResolvedValueOnce([{ overall_balance: "300000" }])
-      .mockRejectedValueOnce(Object.assign(new Error("unique"), { code: "23505" }));
+      .mockResolvedValueOnce([{ id: "req-existing" }]);
     const req = {
       headers: { authorization: "Bearer tok" }, method: "POST",
       body: { month: "2026-05" },
@@ -80,6 +80,7 @@ describe("POST /api/affiliate/payout-request", () => {
       .mockResolvedValueOnce([{ latest_locked: null }])
       .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
       .mockResolvedValueOnce([{ overall_balance: "300000" }])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
         id: "req-new", amount: 300000, status: "pending", period: "2026-05",
         requested_at: new Date("2026-06-01T00:00:00Z"),
@@ -141,6 +142,7 @@ describe("POST /api/affiliate/payout-request", () => {
       .mockResolvedValueOnce([{ latest_locked: null }])
       .mockResolvedValueOnce([{ credits_m: "300000", reversals_m: "0" }])
       .mockResolvedValueOnce([{ overall_balance: "200000" }])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
         id: "req-new", amount: 200000, status: "pending", period: "2026-05",
         requested_at: new Date("2026-06-01T00:00:00Z"),

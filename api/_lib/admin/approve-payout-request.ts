@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sql } from "../db";
 import { verifyAdminSession, ApiError } from "../auth";
+import { insertLedgerEntry } from "../ledger";
 
 export default async function handler(
   req: VercelRequest,
@@ -32,19 +33,15 @@ export default async function handler(
       return;
     }
 
-    // Write ledger deduction — idempotency key prevents double-deduction on retry
-    await sql`
-      INSERT INTO affiliate_ledger_entries
-        (affiliate_id, entry_type, amount, idempotency_key, note)
-      VALUES (
-        ${payout.affiliate_id},
-        'payout_deduction',
-        ${Number(payout.amount)},
-        ${"payout_" + requestId},
-        ${note ?? null}
-      )
-      ON CONFLICT (idempotency_key) DO NOTHING
-    `;
+    await insertLedgerEntry(
+      payout.affiliate_id,
+      "payout_deduction",
+      Number(payout.amount),
+      `payout_${requestId}`,
+      requestId,
+      "affiliate_payout",
+      note ?? null,
+    );
 
     // Mark payout as paid
     const updated = await sql`

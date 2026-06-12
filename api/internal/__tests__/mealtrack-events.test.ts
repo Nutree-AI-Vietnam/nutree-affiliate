@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 
-vi.mock("../../_lib/db", () => ({ sql: vi.fn() }));
+vi.mock("../../_lib/db", () => ({
+  ensureAffiliateIdentitySchema: vi.fn().mockResolvedValue(undefined),
+  sql: vi.fn(),
+}));
 vi.mock("../../_lib/internal-auth", () => ({
   verifyInternalRequest: vi.fn(),
   readRawBody: vi.fn(),
@@ -77,6 +80,14 @@ describe("POST /api/internal/mealtrack-events", () => {
     expect(res["statusCode"]).toBe(400);
   });
 
+  it("returns 400 when JSON body is malformed", async () => {
+    mockReadBody.mockResolvedValue("{bad-json");
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+    expect(res["statusCode"]).toBe(400);
+    expect((res["body"] as { error: string }).error).toContain("Invalid JSON");
+  });
+
   it("returns 400 for affiliate_attribution_created without affiliate_id", async () => {
     const evt = { event_id: "x", event_type: "affiliate_attribution_created", mealtrack_user_id: "u-1" };
     mockReadBody.mockResolvedValue(JSON.stringify(evt));
@@ -92,6 +103,19 @@ describe("POST /api/internal/mealtrack-events", () => {
     expect(res["statusCode"]).toBe(200);
     expect((res["body"] as { status: string }).status).toBe("duplicate");
     expect(mockSql).toHaveBeenCalledTimes(1); // only the inbox insert
+  });
+
+  it("returns duplicate status when the event_id conflict constraint is missing", async () => {
+    mockSql
+      .mockRejectedValueOnce(Object.assign(new Error("missing constraint"), { code: "42P10" }))
+      .mockResolvedValueOnce([{ id: "wh-existing" }]);
+
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+
+    expect(res["statusCode"]).toBe(200);
+    expect((res["body"] as { status: string }).status).toBe("duplicate");
+    expect(mockSql).toHaveBeenCalledTimes(2);
   });
 
   it("initial_purchase with existing trial promotes trial and credits ledger", async () => {
@@ -118,8 +142,27 @@ describe("POST /api/internal/mealtrack-events", () => {
     mockSql
       .mockResolvedValueOnce([{ id: "wh-1" }])  // inbox insert → new
       .mockResolvedValueOnce([])                 // SELECT trial → none
-      .mockResolvedValueOnce([])                 // INSERT converted conversion
+      .mockResolvedValueOnce([{ id: "conv-new" }]) // INSERT converted conversion
       .mockResolvedValueOnce([]);                // UPDATE webhook_event to processed
+
+    const res = makeRes();
+    await handler({ method: "POST", headers: {} }, res);
+
+    expect(res["statusCode"]).toBe(200);
+    expect((res["body"] as { status: string }).status).toBe("accepted");
+    expect(mockInsertLedger).toHaveBeenCalledWith(
+      "aff-1", "credit", 300000, expect.any(String), expect.any(String), expect.any(String), expect.any(String)
+    );
+  });
+
+  it("initial_purchase falls back when the user_id conflict constraint is missing", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ id: "wh-1" }]) // inbox insert → new
+      .mockResolvedValueOnce([]) // SELECT trial → none
+      .mockRejectedValueOnce(Object.assign(new Error("missing constraint"), { code: "42P10" }))
+      .mockResolvedValueOnce([]) // fallback duplicate check
+      .mockResolvedValueOnce([{ id: "conv-new" }]) // fallback insert
+      .mockResolvedValueOnce([]); // UPDATE webhook_event to processed
 
     const res = makeRes();
     await handler({ method: "POST", headers: {} }, res);

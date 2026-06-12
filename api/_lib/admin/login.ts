@@ -9,6 +9,7 @@ function verifyPassword(password: string, stored: string): boolean {
   const [salt, hash] = stored.split(":");
   if (!salt || !hash) return false;
   const hashBuf = Buffer.from(hash, "hex");
+  if (hashBuf.length !== 64) return false;
   const derived = scryptSync(password, salt, 64);
   return timingSafeEqual(hashBuf, derived);
 }

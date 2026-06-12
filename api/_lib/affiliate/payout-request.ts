@@ -96,6 +96,16 @@ export default async function handler(
       return;
     }
 
+    const existingRequest = await sql`
+      SELECT id FROM affiliate_payouts
+      WHERE affiliate_id = ${affiliateId} AND period = ${month}
+      LIMIT 1
+    `;
+    if (existingRequest.length > 0) {
+      res.status(409).json({ error: "Payout already requested for this month" });
+      return;
+    }
+
     try {
       const inserted = await sql`
         INSERT INTO affiliate_payouts (affiliate_id, amount, status, period, requested_at)

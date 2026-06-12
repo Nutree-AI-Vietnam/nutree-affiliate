@@ -2,7 +2,7 @@
 // Ingests signed MealTrack lifecycle events into an idempotent ledger.
 // Each event_id is accepted exactly once; duplicates get a 200 duplicate response.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
+import { ensureAffiliateIdentitySchema, sql } from "../_lib/db";
 import { ApiError } from "../_lib/auth";
 import { verifyInternalRequest, readRawBody } from "../_lib/internal-auth";
 import { getActiveCommissionRule, insertLedgerEntry } from "../_lib/ledger";
@@ -26,6 +26,144 @@ interface EventEnvelope {
   metadata?: Record<string, unknown>;
 }
 
+function isMissingConflictConstraint(err: unknown): boolean {
+  return (err as { code?: string }).code === "42P10";
+}
+
+function isDuplicateKey(err: unknown): boolean {
+  return (err as { code?: string }).code === "23505";
+}
+
+async function insertInboxEvent(evt: EventEnvelope): Promise<boolean> {
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_webhook_events (event_id, event_type, payload, status)
+      VALUES (${evt.event_id}, ${evt.event_type}, ${JSON.stringify(evt)}, 'pending')
+      ON CONFLICT (event_id) DO NOTHING
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (!isMissingConflictConstraint(err)) throw err;
+  }
+
+  const existing = await sql`
+    SELECT id FROM affiliate_webhook_events
+    WHERE event_id = ${evt.event_id}
+    LIMIT 1
+  `;
+  if (existing.length > 0) return false;
+
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_webhook_events (event_id, event_type, payload, status)
+      VALUES (${evt.event_id}, ${evt.event_type}, ${JSON.stringify(evt)}, 'pending')
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (isDuplicateKey(err)) return false;
+    throw err;
+  }
+}
+
+async function insertTrialAttribution(
+  affiliateId: string,
+  userId: string,
+  codeId: string | null,
+  eventId: string,
+  occurredAt: string,
+): Promise<boolean> {
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_conversions
+        (affiliate_id, user_id, affiliate_code_id, event_id, status, occurred_at, locked_until)
+      VALUES (
+        ${affiliateId}, ${userId}, ${codeId}, ${eventId}, 'trial',
+        ${occurredAt},
+        ${occurredAt}::timestamptz + INTERVAL '15 days'
+      )
+      ON CONFLICT (user_id) DO NOTHING
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (!isMissingConflictConstraint(err)) throw err;
+  }
+
+  const existing = await sql`
+    SELECT id FROM affiliate_conversions
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+  if (existing.length > 0) return false;
+
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_conversions
+        (affiliate_id, user_id, affiliate_code_id, event_id, status, occurred_at, locked_until)
+      VALUES (
+        ${affiliateId}, ${userId}, ${codeId}, ${eventId}, 'trial',
+        ${occurredAt},
+        ${occurredAt}::timestamptz + INTERVAL '15 days'
+      )
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (isDuplicateKey(err)) return false;
+    throw err;
+  }
+}
+
+async function insertDirectConversion(
+  affiliateId: string,
+  userId: string,
+  eventId: string,
+  occurredAt: string,
+): Promise<boolean> {
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_conversions
+        (affiliate_id, user_id, event_id, status, converted_at, occurred_at, locked_until)
+      VALUES (
+        ${affiliateId}, ${userId}, ${eventId}, 'converted', NOW(),
+        ${occurredAt},
+        ${occurredAt}::timestamptz + INTERVAL '15 days'
+      )
+      ON CONFLICT (user_id) DO NOTHING
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (!isMissingConflictConstraint(err)) throw err;
+  }
+
+  const existing = await sql`
+    SELECT id FROM affiliate_conversions
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+  if (existing.length > 0) return false;
+
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_conversions
+        (affiliate_id, user_id, event_id, status, converted_at, occurred_at, locked_until)
+      VALUES (
+        ${affiliateId}, ${userId}, ${eventId}, 'converted', NOW(),
+        ${occurredAt},
+        ${occurredAt}::timestamptz + INTERVAL '15 days'
+      )
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (isDuplicateKey(err)) return false;
+    throw err;
+  }
+}
+
 async function processEvent(evt: EventEnvelope): Promise<void> {
   const { event_type, event_id, affiliate_id, mealtrack_user_id } = evt;
 
@@ -44,17 +182,7 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
       if (!evt.occurred_at) {
         console.warn("affiliate_attribution_created missing occurred_at, using NOW()", evt.event_id);
       }
-      // UNIQUE(user_id) enforces one-attribution-per-user; duplicate calls are no-ops.
-      await sql`
-        INSERT INTO affiliate_conversions
-          (affiliate_id, user_id, affiliate_code_id, event_id, status, occurred_at, locked_until)
-        VALUES (
-          ${affiliate_id}, ${mealtrack_user_id}, ${codeId}, ${event_id}, 'trial',
-          ${trialOccurredAt},
-          ${trialOccurredAt}::timestamptz + INTERVAL '15 days'
-        )
-        ON CONFLICT (user_id) DO NOTHING
-      `;
+      await insertTrialAttribution(affiliate_id!, mealtrack_user_id, codeId, event_id, trialOccurredAt);
       break;
     }
 
@@ -90,22 +218,20 @@ async function processEvent(evt: EventEnvelope): Promise<void> {
       } else {
         // No prior trial attribution — insert converted directly if affiliate_id provided.
         if (affiliate_id) {
-          await sql`
-            INSERT INTO affiliate_conversions
-              (affiliate_id, user_id, event_id, status, converted_at, occurred_at, locked_until)
-            VALUES (
-              ${affiliate_id}, ${mealtrack_user_id}, ${event_id}, 'converted', NOW(),
-              ${effectiveOccurredAt},
-              ${effectiveOccurredAt}::timestamptz + INTERVAL '15 days'
-            )
-            ON CONFLICT (user_id) DO NOTHING
-          `;
-          const rule = await getActiveCommissionRule(affiliate_id);
-          await insertLedgerEntry(
-            affiliate_id, "credit", rule.amount,
-            `credit_${event_id}`, event_id, "subscription_initial_purchase",
-            "First-paid conversion commission"
+          const inserted = await insertDirectConversion(
+            affiliate_id,
+            mealtrack_user_id,
+            event_id,
+            effectiveOccurredAt,
           );
+          if (inserted) {
+            const rule = await getActiveCommissionRule(affiliate_id);
+            await insertLedgerEntry(
+              affiliate_id, "credit", rule.amount,
+              `credit_${event_id}`, event_id, "subscription_initial_purchase",
+              "First-paid conversion commission"
+            );
+          }
         }
       }
       break;
@@ -168,7 +294,13 @@ export default async function handler(
     const rawBody = await readRawBody(req);
     verifyInternalRequest(req, rawBody);
 
-    const evt = JSON.parse(rawBody) as EventEnvelope;
+    let evt: EventEnvelope;
+    try {
+      evt = JSON.parse(rawBody) as EventEnvelope;
+    } catch {
+      res.status(400).json({ error: "Invalid JSON body" });
+      return;
+    }
     if (!evt.event_id || !evt.event_type || !evt.mealtrack_user_id) {
       res.status(400).json({ error: "event_id, event_type, mealtrack_user_id are required" });
       return;
@@ -177,16 +309,9 @@ export default async function handler(
       res.status(400).json({ error: "affiliate_id is required for affiliate_attribution_created" });
       return;
     }
+    await ensureAffiliateIdentitySchema();
 
-    // Idempotent inbox insert — returns empty when event_id already exists
-    const inboxResult = await sql`
-      INSERT INTO affiliate_webhook_events (event_id, event_type, payload, status)
-      VALUES (${evt.event_id}, ${evt.event_type}, ${JSON.stringify(evt)}, 'pending')
-      ON CONFLICT (event_id) DO NOTHING
-      RETURNING id
-    `;
-
-    if (inboxResult.length === 0) {
+    if (!(await insertInboxEvent(evt))) {
       res.status(200).json({ status: "duplicate" });
       return;
     }

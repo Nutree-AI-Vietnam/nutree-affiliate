@@ -1,6 +1,6 @@
 // api/_lib/auth.ts
 import type { VercelRequest } from "@vercel/node";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import type { JWTPayload } from "jose";
 
 export interface AuthUser {
@@ -26,6 +26,12 @@ export function signAdminToken(affiliateId: string): string {
   return `admin.${affiliateId}.${hmac}`;
 }
 
+function equalHexDigest(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, "hex");
+  const bBuf = Buffer.from(b, "hex");
+  return aBuf.length === bBuf.length && timingSafeEqual(aBuf, bBuf);
+}
+
 export interface AdminSessionUser {
   affiliateId: string;
 }
@@ -41,7 +47,7 @@ export function verifyAdminSession(req: VercelRequest): AdminSessionUser {
   }
   const [, affiliateId, hmac] = parts;
   const expected = createHmac("sha256", adminSecret()).update(affiliateId).digest("hex");
-  if (hmac !== expected) {
+  if (!equalHexDigest(hmac, expected)) {
     throw new ApiError(401, "Invalid admin token");
   }
   return { affiliateId };

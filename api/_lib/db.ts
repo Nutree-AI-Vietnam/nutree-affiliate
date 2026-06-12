@@ -94,6 +94,8 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
       IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uniq_active_affiliate_code') THEN
         CREATE UNIQUE INDEX uniq_active_affiliate_code ON affiliate_codes (UPPER(code)) WHERE status = 'active';
       END IF;
+    EXCEPTION WHEN unique_violation THEN
+      RAISE NOTICE 'Skipping uniq_active_affiliate_code because duplicate active codes exist';
     END $$
   `;
   await sql`
@@ -101,8 +103,38 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
       IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_affiliates_auth_identity') THEN
         ALTER TABLE affiliates ADD CONSTRAINT uq_affiliates_auth_identity UNIQUE (auth_provider, auth_subject_id);
       END IF;
+    EXCEPTION WHEN unique_violation THEN
+      RAISE NOTICE 'Skipping uq_affiliates_auth_identity because duplicate auth identities exist';
     END $$
   `;
+
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_codes'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE affiliate_codes ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_codes'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE affiliate_codes ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS code VARCHAR`;
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active'`;
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE affiliate_codes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
 
   await sql`CREATE TABLE IF NOT EXISTS affiliate_ledger_entries (
     id              VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,

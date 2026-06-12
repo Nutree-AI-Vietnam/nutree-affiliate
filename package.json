@@ -14,7 +14,7 @@
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",
     "@neondatabase/serverless": "^1.1.0",
-    "@vercel/node": "^5.8.12",
+    "@vercel/node": "^5.5.30",
     "jose": "^6.2.3",
     "qrcode": "^1.5.4",
     "react": "^19.2.6",
@@ -46,5 +46,16 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "@better-auth/passkey": "1.6.17",
+    "better-auth": "1.6.17",
+    "@vercel/node": {
+      "path-to-regexp": "6.3.0",
+      "undici": "6.24.0"
+    },
+    "@vercel/static-config": {
+      "ajv": "8.18.0"
+    }
   }
 }

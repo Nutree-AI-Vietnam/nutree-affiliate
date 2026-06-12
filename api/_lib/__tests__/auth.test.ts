@@ -58,3 +58,23 @@ describe("verifyAuth", () => {
     });
   });
 });
+
+describe("verifyAdminSession", () => {
+  beforeEach(() => {
+    process.env.AFFILIATE_ADMIN_SECRET = "admin-secret";
+    vi.resetModules();
+  });
+
+  it("accepts signed admin tokens", async () => {
+    const { signAdminToken, verifyAdminSession } = await import("../auth");
+    const token = signAdminToken("admin-1");
+    const req = { headers: { authorization: `Bearer ${token}` } } as never;
+    expect(verifyAdminSession(req)).toEqual({ affiliateId: "admin-1" });
+  });
+
+  it("rejects tampered admin tokens without throwing raw crypto errors", async () => {
+    const { verifyAdminSession } = await import("../auth");
+    const req = { headers: { authorization: "Bearer admin.admin-1.not-hex" } } as never;
+    expect(() => verifyAdminSession(req)).toThrow("Invalid admin token");
+  });
+});

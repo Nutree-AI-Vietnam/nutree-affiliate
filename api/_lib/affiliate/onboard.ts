@@ -69,17 +69,25 @@ export default async function handler(
     const existing = await sql`
       SELECT id FROM affiliate_codes WHERE affiliate_id = ${affiliateId} AND status = 'active'
     `;
-    if (existing.length > 0) {
-      await sql`
-        UPDATE affiliate_codes
-        SET code = ${trimmedCode}, updated_at = NOW()
-        WHERE affiliate_id = ${affiliateId} AND status = 'active'
-      `;
-    } else {
-      await sql`
-        INSERT INTO affiliate_codes (affiliate_id, code, status)
-        VALUES (${affiliateId}, ${trimmedCode}, 'active')
-      `;
+    try {
+      if (existing.length > 0) {
+        await sql`
+          UPDATE affiliate_codes
+          SET code = ${trimmedCode}, updated_at = NOW()
+          WHERE affiliate_id = ${affiliateId} AND status = 'active'
+        `;
+      } else {
+        await sql`
+          INSERT INTO affiliate_codes (affiliate_id, code, status)
+          VALUES (${affiliateId}, ${trimmedCode}, 'active')
+        `;
+      }
+    } catch (dbErr) {
+      if ((dbErr as { code?: string }).code === "23505") {
+        res.status(409).json({ error: "Mã này đã được sử dụng, vui lòng chọn mã khác" });
+        return;
+      }
+      throw dbErr;
     }
 
     res.status(200).json({ ok: true, name: trimmedName, referralCode: trimmedCode });

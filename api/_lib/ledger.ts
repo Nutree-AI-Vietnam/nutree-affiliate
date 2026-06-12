@@ -6,6 +6,14 @@ export interface CommissionRule {
   currency: string;
 }
 
+function isMissingConflictConstraint(err: unknown): boolean {
+  return (err as { code?: string }).code === "42P10";
+}
+
+function isDuplicateKey(err: unknown): boolean {
+  return (err as { code?: string }).code === "23505";
+}
+
 /**
  * Look up the applicable commission rule for an affiliate.
  * Checks affiliate-specific overrides first, then falls back to the default rule.
@@ -44,14 +52,38 @@ export async function insertLedgerEntry(
   idempotencyKey: string,
   referenceId: string,
   referenceType: string,
-  note: string
+  note: string | null
 ): Promise<boolean> {
-  const result = await sql`
-    INSERT INTO affiliate_ledger_entries
-      (affiliate_id, entry_type, amount, idempotency_key, reference_id, reference_type, note)
-    VALUES (${affiliateId}, ${entryType}, ${amount}, ${idempotencyKey}, ${referenceId}, ${referenceType}, ${note})
-    ON CONFLICT (idempotency_key) DO NOTHING
-    RETURNING id
+  try {
+    const result = await sql`
+      INSERT INTO affiliate_ledger_entries
+        (affiliate_id, entry_type, amount, idempotency_key, reference_id, reference_type, note)
+      VALUES (${affiliateId}, ${entryType}, ${amount}, ${idempotencyKey}, ${referenceId}, ${referenceType}, ${note})
+      ON CONFLICT (idempotency_key) DO NOTHING
+      RETURNING id
+    `;
+    return result.length > 0;
+  } catch (err) {
+    if (!isMissingConflictConstraint(err)) throw err;
+  }
+
+  const existing = await sql`
+    SELECT id FROM affiliate_ledger_entries
+    WHERE idempotency_key = ${idempotencyKey}
+    LIMIT 1
   `;
-  return result.length > 0;
+  if (existing.length > 0) return false;
+
+  try {
+    const inserted = await sql`
+      INSERT INTO affiliate_ledger_entries
+        (affiliate_id, entry_type, amount, idempotency_key, reference_id, reference_type, note)
+      VALUES (${affiliateId}, ${entryType}, ${amount}, ${idempotencyKey}, ${referenceId}, ${referenceType}, ${note})
+      RETURNING id
+    `;
+    return inserted.length > 0;
+  } catch (err) {
+    if (isDuplicateKey(err)) return false;
+    throw err;
+  }
 }

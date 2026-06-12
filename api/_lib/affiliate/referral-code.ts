@@ -48,10 +48,18 @@ export default async function handler(
       return;
     }
 
-    await sql`
-      UPDATE affiliate_codes SET code = ${trimmed}, updated_at = NOW()
-      WHERE affiliate_id = ${affiliateId} AND status = 'active'
-    `;
+    try {
+      await sql`
+        UPDATE affiliate_codes SET code = ${trimmed}, updated_at = NOW()
+        WHERE affiliate_id = ${affiliateId} AND status = 'active'
+      `;
+    } catch (dbErr) {
+      if ((dbErr as { code?: string }).code === "23505") {
+        res.status(409).json({ error: "Mã này đã được sử dụng, vui lòng chọn mã khác" });
+        return;
+      }
+      throw dbErr;
+    }
 
     res.status(200).json({ code: trimmed });
   } catch (err) {

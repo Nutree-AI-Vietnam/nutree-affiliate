@@ -21,7 +21,13 @@ export default async function handler(
     verifyInternalRequest(req, rawBody);
     await ensureAffiliateIdentitySchema();
 
-    const body = JSON.parse(rawBody) as { code?: unknown };
+    let body: { code?: unknown };
+    try {
+      body = JSON.parse(rawBody) as { code?: unknown };
+    } catch {
+      res.status(400).json({ error: "Invalid JSON body" });
+      return;
+    }
     if (!body.code || typeof body.code !== "string") {
       res.status(400).json({ error: "code is required" });
       return;
