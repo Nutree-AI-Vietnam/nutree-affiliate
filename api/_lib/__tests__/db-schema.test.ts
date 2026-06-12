@@ -27,10 +27,14 @@ describe("ensureAffiliateIdentitySchema", () => {
 
     await ensureAffiliateIdentitySchema();
 
-    expect(
-      mockState.queries.some((query) =>
-        query.includes("ALTER TABLE affiliates ALTER COLUMN firebase_uid DROP NOT NULL"),
-      ),
-    ).toBe(true);
+    expect(mockState.queries).toContain(
+      "ALTER TABLE affiliates ALTER COLUMN firebase_uid DROP NOT NULL",
+    );
+    expect(mockState.queries).toContain(
+      "ALTER TABLE affiliates ALTER COLUMN referral_code DROP NOT NULL",
+    );
+    expect(mockState.queries).toContain(
+      "ALTER TABLE affiliates ALTER COLUMN name SET DEFAULT ''",
+    );
   });
 });
