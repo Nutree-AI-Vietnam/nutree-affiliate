@@ -166,7 +166,27 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
   )`;
 
   await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
-  await sql`ALTER TABLE affiliate_ledger_entries ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_ledger_entries'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE affiliate_ledger_entries ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_ledger_entries'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE affiliate_ledger_entries ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
   await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
   await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS entry_type VARCHAR`;
   await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS amount NUMERIC`;
@@ -177,7 +197,27 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
   await sql`ALTER TABLE affiliate_ledger_entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`;
 
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
-  await sql`ALTER TABLE affiliate_payouts ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_payouts'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE affiliate_payouts ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_payouts'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE affiliate_payouts ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS amount NUMERIC`;
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'requested'`;
@@ -191,7 +231,27 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
   await sql`ALTER TABLE affiliate_payouts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
 
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
-  await sql`ALTER TABLE affiliate_conversions ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_conversions'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE affiliate_conversions ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_conversions'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE affiliate_conversions ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS user_id VARCHAR`;
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS affiliate_code_id VARCHAR`;
@@ -205,7 +265,27 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
   await sql`ALTER TABLE affiliate_conversions ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ`;
 
   await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
-  await sql`ALTER TABLE affiliate_webhook_events ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_webhook_events'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE affiliate_webhook_events ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'affiliate_webhook_events'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE affiliate_webhook_events ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
   await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS event_id VARCHAR`;
   await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS event_type VARCHAR`;
   await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending'`;
@@ -215,7 +295,27 @@ async function applyAffiliateIdentitySchema(): Promise<void> {
   await sql`ALTER TABLE affiliate_webhook_events ADD COLUMN IF NOT EXISTS processed_at TIMESTAMPTZ`;
 
   await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS id VARCHAR DEFAULT gen_random_uuid()::text`;
-  await sql`ALTER TABLE commission_rules ALTER COLUMN id SET DEFAULT gen_random_uuid()::text`;
+  await sql`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'commission_rules'
+          AND column_name = 'id'
+          AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE commission_rules ALTER COLUMN id SET DEFAULT gen_random_uuid();
+      ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'commission_rules'
+          AND column_name = 'id'
+          AND data_type IN ('character varying', 'text')
+      ) THEN
+        ALTER TABLE commission_rules ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+      END IF;
+    END $$
+  `;
   await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS rule_name VARCHAR`;
   await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS partner_type VARCHAR`;
   await sql`ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS affiliate_id VARCHAR`;
