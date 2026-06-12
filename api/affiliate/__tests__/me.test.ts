@@ -28,7 +28,7 @@ describe("GET /api/affiliate/me", () => {
   let handler: (req: any, res: any) => Promise<void>;
 
   beforeAll(async () => {
-    handler = (await import("../me")).default;
+    handler = (await import("../../_lib/affiliate/me")).default;
   });
 
   beforeEach(() => {

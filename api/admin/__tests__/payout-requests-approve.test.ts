@@ -22,10 +22,10 @@ function makeRes() {
 }
 
 describe("POST /api/admin/payout-requests/:id/approve", () => {
-  let handler: (req: unknown, res: unknown) => Promise<void>;
+  let handler: typeof import("../../_lib/admin/approve-payout-request").default;
 
   beforeAll(async () => {
-    handler = (await import("../payout-requests/[id]/approve")).default;
+    handler = (await import("../../_lib/admin/approve-payout-request")).default;
   });
 
   beforeEach(() => {

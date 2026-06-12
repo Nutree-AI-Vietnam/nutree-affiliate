@@ -1,8 +1,8 @@
 // api/affiliate/monthly-earnings.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
-import type { MonthlyEarning } from "../_lib/types";
+import { sql } from "../db";
+import { verifyAuth, ApiError } from "../auth";
+import type { MonthlyEarning } from "../types";
 
 export default async function handler(
   req: VercelRequest,

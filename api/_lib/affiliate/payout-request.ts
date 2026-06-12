@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
+import { sql } from "../db";
+import { verifyAuth, ApiError } from "../auth";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 

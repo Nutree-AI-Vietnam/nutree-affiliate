@@ -1,8 +1,8 @@
 // api/affiliate/payouts.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
-import type { PayoutRequest } from "../_lib/types";
+import { sql } from "../db";
+import { verifyAuth, ApiError } from "../auth";
+import type { PayoutRequest } from "../types";
 
 export default async function handler(
   req: VercelRequest,

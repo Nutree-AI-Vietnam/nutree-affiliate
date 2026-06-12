@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../../_lib/db";
-import { verifyAdminSession, ApiError } from "../../_lib/auth";
-import type { AdminPayoutRequest } from "../../_lib/types";
+import { sql } from "../db";
+import { verifyAdminSession, ApiError } from "../auth";
+import type { AdminPayoutRequest } from "../types";
 
 export default async function handler(
   req: VercelRequest,
@@ -44,7 +44,7 @@ export default async function handler(
         ? (r.completed_at instanceof Date ? r.completed_at.toISOString() : String(r.completed_at))
         : null,
       adminNote: r.admin_note,
-      bankInfo: (r.bank_info as import("../../_lib/types").BankInfo | null) ?? null,
+      bankInfo: (r.bank_info as import("../types").BankInfo | null) ?? null,
     }));
 
     res.status(200).json(requests);

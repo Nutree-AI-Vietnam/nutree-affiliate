@@ -26,7 +26,7 @@ describe("GET /api/affiliate/stats", () => {
   let handler: (req: any, res: any) => Promise<void>;
 
   beforeAll(async () => {
-    handler = (await import("../stats")).default;
+    handler = (await import("../../_lib/affiliate/stats")).default;
   });
 
   beforeEach(() => {
@@ -56,14 +56,14 @@ describe("GET /api/affiliate/stats", () => {
     expect(res["statusCode"]).toBe(200);
     const body = res["body"] as {
       balance: number; totalEarned: number; totalWithdrawn: number;
-      pendingTrials: number; activeSubscriptions: number;
+      pendingTrials: number; activeSubscriptions: number; lastPaidDate: string | null;
     };
     expect(body.balance).toBe(600000);
     expect(body.totalEarned).toBe(900000);
     expect(body.totalWithdrawn).toBe(300000);
     expect(body.pendingTrials).toBe(2);
     expect(body.activeSubscriptions).toBe(3);
-    expect((body as { lastPaidDate: string | null }).lastPaidDate).toBe("2026-05-03");
+    expect(body.lastPaidDate).toBe("2026-05-03");
   });
 
   it("returns zero counts when no conversions exist", async () => {

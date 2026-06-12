@@ -1,7 +1,7 @@
 // api/affiliate/referral-code.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
+import { sql } from "../db";
+import { verifyAuth, ApiError } from "../auth";
 
 export default async function handler(
   req: VercelRequest,

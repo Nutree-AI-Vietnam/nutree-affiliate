@@ -1,8 +1,8 @@
 // api/affiliate/me.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAuth, ApiError } from "../_lib/auth";
-import type { AffiliateProfile } from "../_lib/types";
+import { sql } from "../db";
+import { verifyAuth, ApiError } from "../auth";
+import type { AffiliateProfile } from "../types";
 import { randomBytes, randomUUID } from "crypto";
 
 const APP_STORE_LINK = "https://apps.apple.com/vn/app/nutree-eat-with-science/id6751159552";

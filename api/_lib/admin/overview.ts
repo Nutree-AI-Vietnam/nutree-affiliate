@@ -1,8 +1,8 @@
 // api/admin/overview.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
-import { verifyAdminSession, ApiError } from "../_lib/auth";
-import type { AdminOverview, AdminAffiliateRow } from "../_lib/types";
+import { sql } from "../db";
+import { verifyAdminSession, ApiError } from "../auth";
+import type { AdminOverview, AdminAffiliateRow } from "../types";
 
 const COMMISSION_PER_CONVERSION = 300_000; // VND — mirrors default commission_rules row
 

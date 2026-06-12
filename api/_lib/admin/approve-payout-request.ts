@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../../../_lib/db";
-import { verifyAdminSession, ApiError } from "../../../_lib/auth";
+import { sql } from "../db";
+import { verifyAdminSession, ApiError } from "../auth";
 
 export default async function handler(
   req: VercelRequest,

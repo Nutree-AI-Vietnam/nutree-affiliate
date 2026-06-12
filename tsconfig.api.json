@@ -11,5 +11,6 @@
     "outDir": ".vercel/output/functions",
     "types": ["node"]
   },
-  "include": ["api/**/*"]
+  "include": ["api/**/*", "scripts/**/*"],
+  "exclude": ["**/__tests__/**"]
 }

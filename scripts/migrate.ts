@@ -1,5 +1,5 @@
-// api/migrate.ts
-// Run once: npx ts-node --project tsconfig.api.json api/migrate.ts
+// scripts/migrate.ts
+// Run once: npx ts-node --project tsconfig.api.json scripts/migrate.ts
 // Safe to re-run: uses CREATE TABLE IF NOT EXISTS and ALTER TABLE ADD COLUMN IF NOT EXISTS
 import { neon } from "@neondatabase/serverless";
 import * as dotenv from "dotenv";

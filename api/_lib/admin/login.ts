@@ -1,8 +1,8 @@
 // api/admin/login.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../_lib/db";
+import { sql } from "../db";
 import { scryptSync, timingSafeEqual, randomBytes } from "crypto";
-import { signAdminToken } from "../_lib/auth";
+import { signAdminToken } from "../auth";
 
 function verifyPassword(password: string, stored: string): boolean {
   // stored format: salt:hash (hex)

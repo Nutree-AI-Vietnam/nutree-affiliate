@@ -22,10 +22,10 @@ function makeRes() {
 }
 
 describe("GET /api/affiliate/conversions", () => {
-  let handler: (req: unknown, res: unknown) => Promise<void>;
+  let handler: typeof import("../../_lib/affiliate/conversions").default;
 
   beforeAll(async () => {
-    handler = (await import("../conversions")).default;
+    handler = (await import("../../_lib/affiliate/conversions")).default;
   });
 
   beforeEach(() => {
