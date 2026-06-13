@@ -41,6 +41,11 @@ function cleanCallbackSearch(search: string): string {
   return nextSearch ? `?${nextSearch}` : "";
 }
 
+function isMissingSessionChallengeError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /SESSION_CHALLENGE_COOKIE_NOT_FOUND|Session challenge cookie not found/i.test(message);
+}
+
 /* ─── icons ─── */
 function CheckIcon() {
   return (
@@ -371,7 +376,7 @@ export function Login() {
 
       for (let attempt = 0; attempt < 5 && active; attempt += 1) {
         try {
-          const session = await refreshSession();
+          const session = isAuthCallback ? await api.getCurrentSession() : await refreshSession();
           if (!active) return;
           if (session) {
             resetCallbackRecoveryAttempt();
@@ -379,8 +384,9 @@ export function Login() {
             return;
           }
           if (!isAuthCallback) return;
-        } catch {
+        } catch (err) {
           if (!isAuthCallback) return;
+          if (isMissingSessionChallengeError(err)) break;
           // Neon Auth may need a moment to expose the session after OAuth redirect.
         }
         if (attempt < 4) {

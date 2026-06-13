@@ -147,20 +147,21 @@ describe("Login", () => {
 
   it("restarts Google sign-in once when a verifier callback cannot hydrate", async () => {
     const login = vi.fn().mockRejectedValue(new Error("Redirecting to Google sign-in"));
-    const getCurrentSession = vi.fn().mockResolvedValue(null);
+    const getCurrentSession = vi.fn().mockRejectedValue(new Error("Session challenge cookie not found"));
     const api = makeMockApiWithGoogle({ getCurrentSession, login });
 
     setup(api, "/login?auth=callback&neon_auth_session_verifier=missing-cookie&next=/pt/bank");
 
     await waitFor(() => expect(login).toHaveBeenCalledWith("/pt/bank"), { timeout: 5000 });
-    expect(getCurrentSession).toHaveBeenCalled();
+    expect(getCurrentSession.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it("cleans up exhausted verifier callbacks and shows retryable Google login", async () => {
     sessionStorage.setItem("nutree.oauth.callbackRecoveryAttempted", "1");
     const login = vi.fn();
+    const getCurrentSession = vi.fn().mockRejectedValue(new Error("Session challenge cookie not found"));
     const api = makeMockApiWithGoogle({
-      getCurrentSession: vi.fn().mockResolvedValue(null),
+      getCurrentSession,
       login,
     });
 
@@ -170,6 +171,7 @@ describe("Login", () => {
       () => expect(screen.getByText(/phiên đăng nhập google đã hết hạn/i)).toBeInTheDocument(),
       { timeout: 5000 },
     );
+    expect(getCurrentSession.mock.calls.length).toBeLessThanOrEqual(2);
     expect(login).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /đăng nhập với google/i })).toBeEnabled();
   });
