@@ -41,6 +41,7 @@ function mockFetch(response: unknown, status = 200) {
 
 describe("neonApi", () => {
   beforeEach(() => {
+    window.history.pushState({}, "", "/");
     vi.clearAllMocks();
     mockAuthClient.getSession.mockResolvedValue({ data: { session: null }, error: null });
     mockGetNeonAuthToken.mockResolvedValue("test-token");
@@ -106,6 +107,19 @@ describe("neonApi", () => {
         data: null,
         error: { code: "SESSION_CHALLENGE_COOKIE_NOT_FOUND", error: "Session challenge cookie not found" },
       });
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const api = createNeonApi();
+      await expect(api.getCurrentSession()).rejects.toThrow("Session challenge cookie not found");
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(mockGetNeonAuthToken).not.toHaveBeenCalled();
+    });
+
+    it("treats verifier callbacks without a session as terminal callback failures", async () => {
+      window.history.pushState({}, "", "/login?auth=callback&neon_auth_session_verifier=missing-cookie");
+      mockAuthClient.getSession.mockResolvedValue({ data: { session: null }, error: null });
       const fetchSpy = vi.fn();
       vi.stubGlobal("fetch", fetchSpy);
 

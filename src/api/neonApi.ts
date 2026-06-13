@@ -1,4 +1,5 @@
 import { notifyAuthRequired } from "../auth/auth-events";
+import { hasNeonAuthSessionVerifier } from "../auth/neon-callback";
 import { clearSession, loadSession } from "../auth/session";
 import type { AffiliateApi } from "./index";
 import { authClient, clearNeonAuthTokenCache, getNeonAuthToken } from "../lib/neon-auth";
@@ -127,7 +128,12 @@ export function createNeonApi(): AffiliateApi {
     async getCurrentSession(): Promise<Session | null> {
       const { data, error } = await authClient.getSession() as NeonAuthSessionResult;
       if (error) throw new Error(neonAuthErrorMessage(error));
-      if (!data?.session) return null;
+      if (!data?.session) {
+        if (hasNeonAuthSessionVerifier()) {
+          throw new Error("Session challenge cookie not found");
+        }
+        return null;
+      }
       const profile = await authFetch<AffiliateProfile>("/affiliate/me");
       return {
         affiliateId: profile.affiliateId,
