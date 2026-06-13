@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
@@ -30,6 +30,10 @@ function setup(api: AffiliateApi = makeMockApiWithGoogle(), initialPath = "/logi
 }
 
 describe("Login", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
   it("shows the Google sign-in button after clicking Đăng nhập", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
@@ -139,5 +143,34 @@ describe("Login", () => {
     setup(api, "/login?auth=callback&neon_auth_session_verifier=test-verifier");
 
     await waitFor(() => expect(screen.getByText("pt dashboard")).toBeInTheDocument());
+  });
+
+  it("restarts Google sign-in once when a verifier callback cannot hydrate", async () => {
+    const login = vi.fn().mockRejectedValue(new Error("Redirecting to Google sign-in"));
+    const getCurrentSession = vi.fn().mockResolvedValue(null);
+    const api = makeMockApiWithGoogle({ getCurrentSession, login });
+
+    setup(api, "/login?auth=callback&neon_auth_session_verifier=missing-cookie&next=/pt/bank");
+
+    await waitFor(() => expect(login).toHaveBeenCalledWith("/pt/bank"), { timeout: 5000 });
+    expect(getCurrentSession).toHaveBeenCalled();
+  });
+
+  it("cleans up exhausted verifier callbacks and shows retryable Google login", async () => {
+    sessionStorage.setItem("nutree.oauth.callbackRecoveryAttempted", "1");
+    const login = vi.fn();
+    const api = makeMockApiWithGoogle({
+      getCurrentSession: vi.fn().mockResolvedValue(null),
+      login,
+    });
+
+    setup(api, "/login?auth=callback&neon_auth_session_verifier=missing-cookie");
+
+    await waitFor(
+      () => expect(screen.getByText(/phiên đăng nhập google đã hết hạn/i)).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+    expect(login).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /đăng nhập với google/i })).toBeEnabled();
   });
 });

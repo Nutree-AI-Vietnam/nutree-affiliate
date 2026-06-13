@@ -2,14 +2,43 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useApi } from "../api";
 import { useAuth } from "../auth/AuthProvider";
-import { hasNeonAuthSessionVerifier } from "../auth/neon-callback";
+import { NEON_AUTH_SESSION_VERIFIER_PARAM, hasNeonAuthSessionVerifier } from "../auth/neon-callback";
 import type { Session } from "../types";
 
 type Step = "landing" | "signin";
+const OAUTH_CALLBACK_RECOVERY_KEY = "nutree.oauth.callbackRecoveryAttempted";
+const REDIRECTING_TO_GOOGLE = "Redirecting to Google sign-in";
+const CALLBACK_RETRY_MESSAGE = "Phiên đăng nhập Google đã hết hạn. Vui lòng bấm Đăng nhập với Google lại.";
 
 function normalizeNextPath(value: string | null): string | null {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
   return value;
+}
+
+function takeCallbackRecoveryAttempt(): boolean {
+  try {
+    if (sessionStorage.getItem(OAUTH_CALLBACK_RECOVERY_KEY) === "1") return false;
+    sessionStorage.setItem(OAUTH_CALLBACK_RECOVERY_KEY, "1");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resetCallbackRecoveryAttempt(): void {
+  try {
+    sessionStorage.removeItem(OAUTH_CALLBACK_RECOVERY_KEY);
+  } catch {
+    // Session storage can be unavailable in hardened browser modes.
+  }
+}
+
+function cleanCallbackSearch(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete("auth");
+  params.delete(NEON_AUTH_SESSION_VERIFIER_PARAM);
+  const nextSearch = params.toString();
+  return nextSearch ? `?${nextSearch}` : "";
 }
 
 /* ─── icons ─── */
@@ -345,6 +374,7 @@ export function Login() {
           const session = await refreshSession();
           if (!active) return;
           if (session) {
+            resetCallbackRecoveryAttempt();
             navigateAfterLogin(session);
             return;
           }
@@ -359,9 +389,24 @@ export function Login() {
       }
 
       if (active && isAuthCallback) {
+        if (takeCallbackRecoveryAttempt()) {
+          try {
+            await api.login(nextPath ?? undefined);
+            return;
+          } catch (err) {
+            if (err instanceof Error && err.message === REDIRECTING_TO_GOOGLE) return;
+            if (!active) return;
+            setError(err instanceof Error ? err.message : CALLBACK_RETRY_MESSAGE);
+          }
+        } else {
+          setError(CALLBACK_RETRY_MESSAGE);
+        }
+        navigate(
+          { pathname: location.pathname, search: cleanCallbackSearch(location.search) },
+          { replace: true },
+        );
         setFinishingLogin(false);
         setLoading(false);
-        setError("Không thể hoàn tất đăng nhập. Vui lòng thử lại.");
       }
     }
 
@@ -369,7 +414,16 @@ export function Login() {
     return () => {
       active = false;
     };
-  }, [isAuthCallback, navigateAfterLogin, refreshSession]);
+  }, [
+    api,
+    isAuthCallback,
+    location.pathname,
+    location.search,
+    navigate,
+    navigateAfterLogin,
+    nextPath,
+    refreshSession,
+  ]);
 
   useEffect(() => {
     if (!hasAuthCallbackIntent || hasAuthSessionVerifier) return;
@@ -419,11 +473,13 @@ export function Login() {
   async function signInWithGoogle() {
     setError("");
     setLoading(true);
+    resetCallbackRecoveryAttempt();
     try {
       const session = await api.login(nextPath ?? undefined);
+      resetCallbackRecoveryAttempt();
       navigateAfterLogin(session);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message === "Redirecting to Google sign-in") return;
+      if (err instanceof Error && err.message === REDIRECTING_TO_GOOGLE) return;
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       setLoading(false);

@@ -48,6 +48,7 @@
     "vitest": "^4.1.8"
   },
   "overrides": {
+    "esbuild": "0.28.1",
     "@better-auth/passkey": "1.6.17",
     "better-auth": "1.6.17",
     "@vercel/node": {
