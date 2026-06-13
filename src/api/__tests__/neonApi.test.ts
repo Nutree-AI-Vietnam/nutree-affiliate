@@ -100,6 +100,21 @@ describe("neonApi", () => {
       });
       expect(mockGetNeonAuthToken).toHaveBeenCalledOnce();
     });
+
+    it("surfaces Neon Auth session errors before loading affiliate data", async () => {
+      mockAuthClient.getSession.mockResolvedValue({
+        data: null,
+        error: { code: "SESSION_CHALLENGE_COOKIE_NOT_FOUND", error: "Session challenge cookie not found" },
+      });
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const api = createNeonApi();
+      await expect(api.getCurrentSession()).rejects.toThrow("Session challenge cookie not found");
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(mockGetNeonAuthToken).not.toHaveBeenCalled();
+    });
   });
 
   describe("logout()", () => {

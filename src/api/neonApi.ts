@@ -9,6 +9,24 @@ import type {
 
 const BASE_URL = "/api";
 
+interface NeonAuthClientError {
+  code?: string;
+  error?: string;
+  message?: string;
+}
+
+interface NeonAuthSessionResult {
+  data?: {
+    session?: unknown | null;
+  } | null;
+  error?: NeonAuthClientError | Error | null;
+}
+
+function neonAuthErrorMessage(error: NonNullable<NeonAuthSessionResult["error"]>): string {
+  if (error instanceof Error) return error.message;
+  return error.message ?? error.error ?? error.code ?? "Unable to load Neon Auth session";
+}
+
 async function authFetch<T>(
   path: string,
   options?: RequestInit,
@@ -107,7 +125,8 @@ export function createNeonApi(): AffiliateApi {
     },
 
     async getCurrentSession(): Promise<Session | null> {
-      const { data } = await authClient.getSession();
+      const { data, error } = await authClient.getSession() as NeonAuthSessionResult;
+      if (error) throw new Error(neonAuthErrorMessage(error));
       if (!data?.session) return null;
       const profile = await authFetch<AffiliateProfile>("/affiliate/me");
       return {
