@@ -374,7 +374,8 @@ export function Login() {
         setLoading(true);
       }
 
-      for (let attempt = 0; attempt < 5 && active; attempt += 1) {
+      const maxAttempts = isAuthCallback ? 1 : 5;
+      for (let attempt = 0; attempt < maxAttempts && active; attempt += 1) {
         try {
           const session = isAuthCallback ? await api.getCurrentSession() : await refreshSession();
           if (!active) return;
@@ -389,7 +390,7 @@ export function Login() {
           if (isMissingSessionChallengeError(err)) break;
           // Neon Auth may need a moment to expose the session after OAuth redirect.
         }
-        if (attempt < 4) {
+        if (attempt < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
         }
       }

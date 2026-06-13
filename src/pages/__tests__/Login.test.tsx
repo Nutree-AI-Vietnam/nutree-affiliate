@@ -126,23 +126,15 @@ describe("Login", () => {
     expect(screen.queryByText(/không thể hoàn tất đăng nhập/i)).not.toBeInTheDocument();
   });
 
-  it("keeps retrying callback hydration while Neon session is not ready yet", async () => {
-    const api = makeMockApiWithGoogle({
-      getCurrentSession: vi.fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValue({
-          affiliateId: "uid1",
-          name: "Alex",
-          email: "alex@test.com",
-          role: "pt",
-          onboarded: true,
-        }),
-    });
+  it("restarts Google sign-in when a verifier callback returns no session", async () => {
+    const login = vi.fn().mockRejectedValue(new Error("Redirecting to Google sign-in"));
+    const getCurrentSession = vi.fn().mockResolvedValue(null);
+    const api = makeMockApiWithGoogle({ getCurrentSession, login });
 
-    setup(api, "/login?auth=callback&neon_auth_session_verifier=test-verifier");
+    setup(api, "/login?auth=callback&neon_auth_session_verifier=empty-session");
 
-    await waitFor(() => expect(screen.getByText("pt dashboard")).toBeInTheDocument());
+    await waitFor(() => expect(login).toHaveBeenCalledWith(undefined), { timeout: 5000 });
+    expect(getCurrentSession.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it("restarts Google sign-in once when a verifier callback cannot hydrate", async () => {
